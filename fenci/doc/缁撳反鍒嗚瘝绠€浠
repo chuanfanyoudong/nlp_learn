@@ -1,0 +1,151 @@
+
+# 结巴分词
+
+
+```python
+import jieba # 导入结巴分词
+```
+
+## cut函数
+
+
+```python
+text = "我来到天安门前，其实我感觉也很不错的" # 输入文本
+jieba.cut(text) # 这样输出是一个生成器
+```
+
+
+
+
+    <generator object Tokenizer.cut at 0x0000016D40EAF5C8>
+
+
+
+
+```python
+# 想转化成列表，有两种方法
+list(jieba.cut(text))
+```
+
+    Building prefix dict from the default dictionary ...
+    Loading model from cache C:\Users\DELL-5~1\AppData\Local\Temp\jieba.cache
+    Loading model cost 0.890 seconds.
+    Prefix dict has been built succesfully.
+    
+
+
+
+
+    ['我', '来到', '天安门', '前', '，', '其实', '我', '感觉', '也', '很', '不错', '的']
+
+
+
+
+```python
+## 第二种方法
+# 使用lcut函数、其中lcut函数会把生成器转化成list
+jieba.lcut(text)
+```
+
+
+
+
+    ['我', '来到', '天安门', '前', '，', '其实', '我', '感觉', '也', '很', '不错', '的']
+
+
+
+## cut函数的参数
+
+### def cut(self, sentence, cut_all=False, HMM=True):
+
+这是jieba.cut的源码
+
+可以看出，一共有三个参数：
+
+> sentence:输入的要分词的句子
+
+> cut_all:是否要全切分
+
+> HMM:是否适用隐马尔科夫进行新词识别
+
+
+```python
+# cut_all指的是全切分，测试一波
+jieba.lcut(text, cut_all = True)
+```
+
+
+
+
+    ['我', '来到', '天安', '天安门', '门前', '', '', '其实', '我', '感觉', '也', '很', '不错', '的']
+
+
+
+**全切分之后，会把所有的分词结果展示出来，例子中的天安、天安门、门前就是这个例子，这个可以应用在搜索领域**
+
+
+```python
+# HMM指的是是否是用隐马尔科夫模型发现新词、默认为True，测试一波
+text = "他来到了网易杭研大厦"
+print("使用隐马尔可夫模型发现新词", jieba.lcut(text))
+print("不使用隐马尔可夫模型发现新词", jieba.lcut(text, HMM = False))
+```
+
+    使用隐马尔可夫模型发现新词 ['他', '来到', '了', '网易', '杭研', '大厦']
+    不使用隐马尔可夫模型发现新词 ['他', '来到', '了', '网易', '杭', '研', '大厦']
+    
+
+**我们可以看到使用了隐马尔科夫之后，“杭研“被分出来了**
+
+## cut函数的原理
+
+引用官方的解释：
+
+- 基于前缀词典实现高效的词图扫描，生成句子中汉字所有可能成词情况所构成的有向无环图 (DAG)
+
+- 采用了动态规划查找最大概率路径, 找出基于词频的最大切分组合
+
+- 对于未登录词，采用了基于汉字成词能力的 HMM 模型，使用了 Viterbi 算法
+
+**基于前缀词典生成有向无环图，这里后续我会，专门细数，现在给大家看一下有向无环图的结果**
+
+>下面是生成有向无环图的源码
+
+```python
+    def get_DAG(self, sentence):
+        self.check_initialized()
+        DAG = {}
+        N = len(sentence)
+        for k in xrange(N):
+            tmplist = []
+            i = k
+            frag = sentence[k]
+            while i < N and frag in self.FREQ:
+                if self.FREQ[frag]:
+                    tmplist.append(i)
+                i += 1
+                frag = sentence[k:i + 1]
+            if not tmplist:
+                tmplist.append(k)
+            DAG[k] = tmplist
+        return DAG
+```
+
+## 这里是有向无环图的示例:
+
+text = 我来到中国天安门
+
+**{0: [0], 1: [1, 2], 2: [2], 3: [3, 4], 4: [4], 5: [5, 6, 7], 6: [6], 7: [7]}**
+
+可以看出”我来到中国天安门“分别对应着标号是01234567
+
+上面的有向无环图的每一个键代表着第几个标号的字符、后面的list代表着该字符可以和哪些字符组成词语
+
+比如：5: [5, 6, 7], 可以看出 5对应着天，所以可以组成的词有 5-5：天；5-6：天安；5-7：天安门
+
+采用了动态规划查找最大概率路径, 找出基于词频的最大切分组合
+
+对于未登录词，采用了基于汉字成词能力的 HMM 模型，使用了 Viterbi 算法
+
+**我会专门写一下这个的具体实现过程**
+

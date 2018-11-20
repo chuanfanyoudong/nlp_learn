@@ -1,0 +1,79 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Good Thymes Virtual Grocery</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" media="all"
+          href="../../css/gtvg.css" th:href="@{/css/gtvg.css}" />
+</head>
+
+<body>
+<!--<p th:if="${test3.password} gt 3 ">中</p>-->
+<p>{{abs}}</p>
+    <form method="POST">
+        <input type="text" name="date" placeholder="date">
+        <br>
+        <input type="text" name="thing" placeholder="thing">
+        <br>
+        <input type="text" name="important" placeholder="password">
+        <br>
+        <input type="submit" value="Submit">
+        <input type="reset" value="reset">
+    </form>
+
+<p th:text="${test}"  style="text-align:center;">This text will not be show! </p>
+<!--<p>Welcome to our grocery store!</p>-->
+
+                <li align="center">
+                    <a href="/rate/zkj" tabindex="-1" id=":2"  >
+                        <i class="zg-icon zg-icon-dd-pm"></i>返回主页
+                        <span id="zh-top-nav-pm-count" class="zu-top-nav-pm-count zg-noti-number" style="visibility:hidden" data-count="0">
+                    </span>
+                    </a>
+                </li>
+
+<form>
+    <input type="submit" value="Submit">
+    用户名: <input type="text" name="firstname"><br>
+    <input type="submit" value="Submit">
+    密码: <input type="text" name="lastname">
+</form>
+<div class="top-nav-profile" style="text-align:center;">
+    <table border="1">
+        <tr>
+            <th style="font-family:arial;color:red;font-size:20px;">姓名</th>
+            <th style="font-family:arial;color:red;font-size:20px;">性别</th>
+        </tr>
+        <tr>
+            <td>姜振康</td>
+            <td>男</td>
+        </tr>
+        <tr>
+            <td>王嫔楠</td>
+            <td>女</td>
+        </tr>
+</div>
+
+<div id="container" >
+
+    <div id="header" style="background-color:#FFA500;">
+        <h1 style="margin-bottom:0;">管理系统</h1></div>
+
+    <div id="menu" style="background-color:#FFD700;height:200px;width:100px;float:left;">
+        <b>菜单</b><br>
+        HTML<br>
+        CSS<br>
+        JavaScript</div>
+
+    <div id="content" style="background-color:#EEEEEE;height:200px;width:400px;float:left;">
+        内容在这里</div>
+
+    <div id="footer" style="background-color:#FFA500;clear:both;text-align:center;">
+        版权 © runoob.com</div>
+
+</div>
+</table>
+</body>
+
+</html>

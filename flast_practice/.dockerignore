@@ -1,0 +1,5 @@
+*/*/.git
+*/.git
+.git
+build.log
+conf/local.ini

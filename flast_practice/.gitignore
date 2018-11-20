@@ -1,0 +1,11 @@
+.idea/
+*__pycache__*
+*bin
+*data
+*log
+*train.txt
+dcbvenv/
+modules/gossip/input.txt
+question_ner/
+common_lib/
+conf/local.ini
