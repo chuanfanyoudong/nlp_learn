@@ -1,0 +1,70 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Good Thymes Virtual Grocery</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" media="all"
+          href="../../css/gtvg.css" th:href="@{/css/gtvg.css}" />
+</head>
+
+<body>
+
+    <div id="Layer1" style="position:absolute; z-index:-1;left:0px; top:0px; width:100%; height:100%">  
+<img src="../static/img/python_split.jpg" width="100%" height="100%" />  
+    </div>
+
+    <div id="header" style="background-color:rgba(255,100,255,0.2); text-align:center;">
+        <h1 style="margin-bottom:0;">分词系统</h1></div>
+
+    <div id="menu" style="background-color:rgba(255,255,255,0.2);height:200px;width:200px;float:left;">
+        <b>Knowledge Need</b><br>
+        HMM<br>
+        CRF<br>
+        hard work</div>
+
+    <div id="content" style="background-color:rgba(255,255,255,0.2);height:200px;width:400px;float:left;">
+        <form method="POST">
+            <input type="text" name="ner_sentence" placeholder="请输入待识别的句子" style="width:200px;height:20px">
+            <br>
+            <input type="submit" name = "submit" value="CRF" style="width:200px;height:20px">
+            <br>
+            <input type="submit" name = "submit" value="待定" style="width:200px;height:20px">
+            <br>
+            <input type="submit" name = "submit" value="待定" style="width:200px;height:20px">
+        </form>
+    </div>
+    <div id="content" style="background-color:rgba(255,255,100,0.2);height:200px;width:600px;float:left;">
+        <p>{{split_result}}</p>
+    </div>
+        <!--<div id="content" style="background-color:rgba(255,255,255,0.2);height:200px;width:400px;float:left;">-->
+        <!--<p>{{split_result}}</p>-->
+    <!--</div>-->
+    <div id="footer" style="background-color:rgba(188,255,255,0.2);clear:both;text-align:center;">
+        版权 © JIANG_FENCI.com
+    </div>
+    <div id="container" >
+
+<li align="right">
+    <a href="/" tabindex="-1" id=":2"  >
+        <i class="zg-icon zg-icon-dd-pm"></i>返回主页
+        <span id="zh-top-nav-pm-count" class="zu-top-nav-pm-count zg-noti-number" style="visibility:hidden" data-count="0">
+    </span>
+    </a><br>
+    <a href="https://me.csdn.net/jiangzhenkang" tabindex="-1" id=":2"  >
+        <i class="zg-icon zg-icon-dd-pm"></i>博客
+        <span id="zh-top-nav-pm-count" class="zu-top-nav-pm-count zg-noti-number" style="visibility:hidden" data-count="0">
+    </span>
+    </a><br>
+    <a href="https://github.com/chuanfanyoudong" tabindex="-1" id=":2"  >
+        <i class="zg-icon zg-icon-dd-pm"></i>Github
+        <span id="zh-top-nav-pm-count" class="zu-top-nav-pm-count zg-noti-number" style="visibility:hidden" data-count="0">
+    </span>
+    </a>
+</li>
+
+</form>
+
+</body>
+
+</html>

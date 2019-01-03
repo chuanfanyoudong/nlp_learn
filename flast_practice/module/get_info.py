@@ -27,3 +27,8 @@ class GetInfo():
         for i in self.thing_date.find():
             all_thing_list.append(i)
         return all_thing_list
+
+
+if __name__ == '__main__':
+    lc = GetInfo()
+    print(lc.get_thing("20181027"))

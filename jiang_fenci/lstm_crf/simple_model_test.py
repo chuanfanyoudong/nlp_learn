@@ -7,6 +7,7 @@ from jiang_fenci.lstm_crf.lstm_crf import BiLSTM_CRF, prepare_sequence
 import marshal
 import os
 now_path = os.path.dirname((os.path.abspath(__file__)))
+# print("crf", now_path)
 
 START_TAG = "<START>"
 STOP_TAG = "<STOP>"
@@ -28,10 +29,10 @@ class ModelMain(object):
         self.word_to_ix = marshal.load(word_label)
 
     def main(self, sentence):
-        print(self.word_to_ix)
-        print(self.tag_to_ix)
+        # print(self.word_to_ix)
+        # print(self.tag_to_ix)
         model = BiLSTM_CRF(len(self.word_to_ix), self.tag_to_ix, EMBEDDING_DIM, HIDDEN_DIM)
-        model.load_state_dict(torch.load("./lstm_crf_model", map_location='cpu'))
+        model.load_state_dict(torch.load(now_path + "/lstm_crf_model", map_location='cpu'))
         model.eval()
         # sentence = "来到2"
         if sentence == "":
@@ -53,7 +54,7 @@ class ModelMain(object):
             i += 1
         if j != i:
             result.append(sentence[j:i])
-        print(result)
+        return result
 
 
 if __name__ == '__main__':
