@@ -1,2 +1,5 @@
 data/*
 nlp_base/*
+.idea/*
+*.log
+jieba/*
