@@ -48,7 +48,8 @@ def segment_test(file = "pku", train = False, train_file = "pku", test_function 
         origin_file_list = open(ROOT + SPLIT_DATA + origin_file, "r", encoding = "utf-8").readlines()
         segment_file_list = open(ROOT + SPLIT_DATA + segment_file, "r", encoding="utf-8").readlines()
         for i in range(len(origin_file_list)):
-            test_segment = test_function(origin_file_list[i].strip())
+            # try:
+            test_segment = test_function(origin_file_list[i].strip(), reverse = True)
             writer.write("  ".join(test_segment) + "\n")
             if test_segment == []:
                 break

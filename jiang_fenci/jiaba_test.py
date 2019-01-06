@@ -1,3 +1,4 @@
-N = 5
-for idx in range(0, N, 1):
-    print(idx)
+import jieba.posseg as pseg
+
+words = pseg.cut("我爱中国")
+print(list(words))
