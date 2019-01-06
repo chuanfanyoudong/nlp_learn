@@ -40,7 +40,7 @@ class ModelMain(object):
         split_sentence = list(sentence)
         inputs = prepare_sequence(split_sentence, self.word_to_ix)
         tag_scores = model(inputs)[1]
-        print(tag_scores)
+        # print(tag_scores)
         # tag_scores[1]
         result = []
         i = 0

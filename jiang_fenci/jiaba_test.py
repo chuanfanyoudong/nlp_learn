@@ -1,4 +1,3 @@
-import jieba
-
-fenci_list = jieba.lcut("我来到天安门前")
-print(fenci_list)
+N = 5
+for idx in range(0, N, 1):
+    print(idx)

@@ -6,7 +6,7 @@ CORPUS
 """
 import pickle
 from collections import Counter
-from jiang_fenci.hmm_segment.segment.config import get_config
+from conf.config import get_config
 import codecs
 
 __corpus = None
@@ -166,13 +166,13 @@ class Corpus:
         """
         获取状态概率
         """
-        config = get_config()
+        __config = get_config()
         if name == 'init':
-            state_path = config.get('segment', 'init_state_path')
+            state_path = __config["path"]["root"] + __config.get('segment', 'init_state_path')
         elif name == 'trans':
-            state_path = config.get('segment', 'trans_state_path')
+            state_path = __config["path"]["root"] + __config.get('segment', 'trans_state_path')
         elif name == 'emit':
-            state_path = config.get('segment', 'emit_state_path')
+            state_path = __config["path"]["root"] + __config.get('segment', 'emit_state_path')
         else:
             raise ValueError('state name must in ["init", "trans", "emit"].')
         state = cls.read_state_from_file(state_path)

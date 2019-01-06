@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template
-from jiang_fenci.max_fre_segment.main import TokenGet
+from jiang_fenci.max_fre_segment.max_fre import TokenGet
 from jiang_fenci.hmm_segment.segment.model import Segment
 from jiang_fenci.lstm_crf.simple_model_test import ModelMain
 

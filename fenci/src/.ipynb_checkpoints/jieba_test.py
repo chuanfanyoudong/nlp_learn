@@ -1,6 +1,6 @@
-import jieba
+import jieba_
 
 text = "我来到中国天安门"
 
-print(list(jieba.cut(text)))
+print(list(jieba_.cut(text)))
 
