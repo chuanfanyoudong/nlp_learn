@@ -14,9 +14,10 @@
 """
 
 import os
-CONFIG_PATH = os.path.abspath(__file__) + "/../config.conf"
+ROOT = "/".join(os.path.abspath(__file__).split("/")[:-2])
+CONFIG_PATH = "/".join(os.path.abspath(__file__).split("/")[:-1]) + "/config.conf"
 path = os.path.abspath(__file__)
-print(path)
+
 # print(CONFIG_PATH)
 from configparser import ConfigParser
 

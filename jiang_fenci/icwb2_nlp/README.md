@@ -1,3 +1,5 @@
+# 分词的测试脚本（用法如下）
+
 2nd International Chinese Word Segmentation Bakeoff - Data Release
 Release 1, 2005-11-18
 
