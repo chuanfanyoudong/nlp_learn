@@ -15,7 +15,6 @@ import traceback
 
 import torch
 from pymongo import MongoClient
-from torch.utils.data import TensorDataset, DataLoader
 
 """
 词向量的准备
@@ -31,7 +30,7 @@ TEST_DATA_PATH = __config["segment"]["lstm_test_data"]
 VAL_DATA_PATH = __config["segment"]["lstm_val_data"]
 
 def get_embedding(char_list):
-    tag2id = {"B":0, "E":1, "O":2, "S":3, "T":4}
+    tag2id = {"B":0, "E":1, "O":2, "S":3}
     path = ROOT_DATA + EMBEDDING_ROOT
     if  os.path.exists(path):
         embedding_file = open(path, 'rb')
@@ -45,8 +44,7 @@ def get_embedding(char_list):
         embedding_file = open(ROOT_DATA + EMBEDDING_ROOT, "wb")
         for vector_info in embedding_data.find({"$where":"this.word.length <2"}):
             word = vector_info["word"]
-            vector = [float(i) for i in vector_info["vector"]]
-            # print(vector)
+            vector = vector_info["vector"]
             embedding_dict[word] = vector
         pickle.dump(embedding_dict, embedding_file)
     word2id = {}
@@ -56,20 +54,14 @@ def get_embedding(char_list):
             word2id[word] = n
             n += 1
     # word2id = {word : idx if word in char_list else "<unk>" for idx, word in enumerate(embedding_dict, 2)}
-    word2id["<unk>"] = 1
+    embedding_list = [embedding_dict[word] for word in word2id]
+    word2id["<unk>"] = 0
     word2id["<pad>"] = 0
-    default_vector = [0. for _ in range(200)]
-    # for key, value in embedding_dict:
-    #     if len(value) != 200:
-    #         print(key)
-    embedding_list = [embedding_dict[word] if word in embedding_dict and len(embedding_dict[word]) == 200 else default_vector for word in word2id]
-
-    # print(len(word2id))
+    print(len(word2id))
     return word2id, embedding_list, tag2id
 
 def prepare_sequence(seq, to_ix):
     idxs = [to_ix[w]  if w in to_ix else to_ix["<unk>"] for w in seq]
-    # char_list
     return torch.tensor(idxs, dtype=torch.long)
 
 def get_train_data():
@@ -80,9 +72,6 @@ def get_train_data():
     train_data = []
     val_data = []
     test_data = []
-    train_data_length = []
-    val_data_length = []
-    test_data_length = []
     char_set = set()
     val_data_file = open(ROOT_DATA + VAL_DATA_PATH, "r", encoding= "utf-8")
     train_data_file = open(ROOT_DATA + TRAIN_DATA_PATH, "r", encoding="utf-8")
@@ -93,56 +82,28 @@ def get_train_data():
         for char in line:
             if char != " ":
                 char_set.add(char)
-        processd_line = process_line(line)
-        if processd_line:
-            test_data.append(processd_line[0])
-            test_data_length.append(processd_line[1])
+        test_data.append(process_line(line))
     for line in val_data_file:
         for char in line:
             if char != " ":
                 char_set.add(char)
-        processd_line = process_line(line)
-        if processd_line:
-            val_data.append(processd_line[0])
-            val_data_length.append(processd_line[1])
+        val_data.append(process_line(line))
     for line in train_data_file:
         n += 1
         for char in line:
             if char != " ":
                 char_set.add(char)
             # train_data_file.write(line)
-        processd_line = process_line(line)
-        if processd_line:
-            train_data.append(processd_line[0])
-            train_data_length.append(processd_line[1])
+        train_data.append(process_line(line))
     print(len(train_data), len(val_data), len(test_data))
-    # max_length = 0
-    # for i in train_data:
-    #     max_length = max(max_length, max(train_data_length))
-    # for i in val_data:
-    #     max_length = max(max_length, max(val_data_length))
-    # for i in test_data:
-    #     max_length = max(max_length, max(test_data_length))
-    # print("最大长度", max_length)
-    return train_data, val_data, test_data, list(char_set), train_data_length, val_data_length, test_data_length
-
-def generate_iteration(data, word2id, tag2id, char_list, data_length):
-    x = torch.tensor(
-        [[word2id[word] if word in word2id else word2id["<unk>"] for word in single_data[0]] for single_data in
-         data])
-    y = torch.tensor(
-        [[tag2id[tag] if tag in tag2id else tag2id["<unk>"] for tag in single_data[1]] for single_data in data])
-    length = torch.tensor(data_length)
-    tensor_data = TensorDataset(x, y, length)
-    dataloader = DataLoader(tensor_data, batch_size=int(__config["segment"]["lstm_batch_size"]))
-    return dataloader
+    return train_data, val_data, test_data, list(char_set)
 
 
-def process_line(line = "", max_length = 581):
+def process_line(line = ""):
     # line = "“  征  而  未  用  的  耕地  和  有  收益  的  土地  ，  不准  荒芜  。"
     if line.strip() == "":
         return None
-    line_list = line.strip("\n").split("  ")
+    line_list = line.strip().split("  ")
     while "" in line_list:
         line_list.remove("")
     sentence = "".join(line_list)
@@ -160,17 +121,9 @@ def process_line(line = "", max_length = 581):
             tmp_tag_list[0] = "B"
             tmp_tag_list[-1] = "E"
             tag_list = tag_list + tmp_tag_list
-    list_sentence= list(sentence)
-    real_length = len(list_sentence)
-    while len(list_sentence) < max_length:
-        list_sentence.append("<pad>")
-        tag_list.append("T")
-    if len(list_sentence) != len(tag_list) or len(list_sentence) > 581:
-        print(list_sentence)
+    if len(list(sentence)) != len(tag_list):
         raise Exception("数据处理出错")
-
-
-    return (list_sentence, tag_list), real_length
+    return (list(sentence), tag_list)
 
 
 

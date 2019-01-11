@@ -3,3 +3,4 @@ nlp_base/*
 .idea/*
 *.log
 jieba_git/*
+*.pyc
