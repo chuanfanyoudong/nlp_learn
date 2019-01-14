@@ -46,8 +46,9 @@ def get_embedding(char_list):
         for vector_info in embedding_data.find({"$where":"this.word.length <2"}):
             word = vector_info["word"]
             vector = [float(i) for i in vector_info["vector"]]
+            if len(vector) == 200:
             # print(vector)
-            embedding_dict[word] = vector
+                embedding_dict[word] = vector
         pickle.dump(embedding_dict, embedding_file)
     word2id = {}
     n = 2
@@ -58,13 +59,17 @@ def get_embedding(char_list):
     # word2id = {word : idx if word in char_list else "<unk>" for idx, word in enumerate(embedding_dict, 2)}
     word2id["<unk>"] = 1
     word2id["<pad>"] = 0
+    embedding_list = []
+    reverse_word2id = {}
     default_vector = [0. for _ in range(200)]
-    # for key, value in embedding_dict:
-    #     if len(value) != 200:
-    #         print(key)
-    embedding_list = [embedding_dict[word] if word in embedding_dict and len(embedding_dict[word]) == 200 else default_vector for word in word2id]
-
-    # print(len(word2id))
+    for key, value in word2id.items():
+        reverse_word2id[value] = key
+    for i in range(len(word2id)):
+        word = reverse_word2id[i]
+        if word in embedding_dict:
+            embedding_list.append(embedding_dict[word])
+        else:
+            embedding_list.append(default_vector)
     return word2id, embedding_list, tag2id
 
 def prepare_sequence(seq, to_ix):
@@ -72,7 +77,7 @@ def prepare_sequence(seq, to_ix):
     # char_list
     return torch.tensor(idxs, dtype=torch.long)
 
-def get_train_data():
+def get_train_data(data_all = 0):
     """
     获取训练数据
     :return:
@@ -84,10 +89,16 @@ def get_train_data():
     val_data_length = []
     test_data_length = []
     char_set = set()
-    val_data_file = open(ROOT_DATA + VAL_DATA_PATH, "r", encoding= "utf-8")
-    train_data_file = open(ROOT_DATA + TRAIN_DATA_PATH, "r", encoding="utf-8")
-    # new_train_data_file = open(ROOT_DATA + TRAIN_DATA_PATH + "_", "w", encoding="utf-8")
-    test_data_file = open(ROOT_DATA + TEST_DATA_PATH, "r", encoding="utf-8")
+    if data_all:
+        val_data_file = open(ROOT_DATA + VAL_DATA_PATH, "r", encoding= "utf-8")
+        train_data_file = open(ROOT_DATA + TRAIN_DATA_PATH, "r", encoding="utf-8")
+        # new_train_data_file = open(ROOT_DATA + TRAIN_DATA_PATH + "_", "w", encoding="utf-8")
+        test_data_file = open(ROOT_DATA + TEST_DATA_PATH, "r", encoding="utf-8")
+    else:
+        val_data_file = open(ROOT_DATA + VAL_DATA_PATH + "_min", "r", encoding="utf-8")
+        train_data_file = open(ROOT_DATA + TRAIN_DATA_PATH + "_min", "r", encoding="utf-8")
+        # new_train_data_file = open(ROOT_DATA + TRAIN_DATA_PATH + "_", "w", encoding="utf-8")
+        test_data_file = open(ROOT_DATA + TEST_DATA_PATH + "_min", "r", encoding="utf-8")
     n = 0
     for line in test_data_file:
         for char in line:
@@ -162,6 +173,7 @@ def process_line(line = "", max_length = 581):
             tag_list = tag_list + tmp_tag_list
     list_sentence= list(sentence)
     real_length = len(list_sentence)
+    # real_length = 581
     while len(list_sentence) < max_length:
         list_sentence.append("<pad>")
         tag_list.append("T")
