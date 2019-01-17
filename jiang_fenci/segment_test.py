@@ -29,7 +29,7 @@ ROOT = __config["path"]["root"]
 SPLIT_DATA = __config["path"]["split_data"]
 # print(ROOT)
 
-def segment_test(file = "pku", train = False, train_file = "pku", test_function = jieba.lcut):
+def segment_test(file = "pku", train = False, train_file = "pku", test_function = tg.main):
     writer= open("result.txt", "w", encoding= "utf-8")
 
     origin_file = file + "_origin.utf8"

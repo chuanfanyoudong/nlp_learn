@@ -9,6 +9,7 @@
 @time: 2019/1/9 16:19
 """
 import sys
+import time
 
 from sklearn_crfsuite import metrics
 from torch.autograd import Variable
@@ -18,6 +19,7 @@ ROOT = "/data/users/zkjiang/projects/nlp_learn"
 sys.path.append(ROOT)
 from pre_process_nomask import *
 from model_nomask import LSTMSplit
+from lstm_crf import BiLSTM_CRF
 from conf.config import get_config
 import torch
 import torch.nn as nn
@@ -49,7 +51,7 @@ logger = logging.getLogger(__name__)
 #     for word in sent:
 #         if word not in word2id:
 #             word2id[word] = len(word2id)
-# logger.info(word2id)
+# print(word2id)
 # tag2id = {"DET": 0, "NN": 1, "V": 2}
 
 # These will usually be more like 32 or 64 dimensional.
@@ -63,22 +65,22 @@ def main_():
     train_data, val_data, test_data, char_list, train_data_length, val_data_length, test_data_length = get_train_data(data_all = 0)
     for i in train_data:
         if i == None:
-            logger.info(1)
+            print(1)
     word2id, embedding_list, tag2id = get_embedding(char_list)
     train_dataloader = generate_iteration(train_data, word2id, tag2id, char_list, train_data_length)
     val_dataloader = generate_iteration(val_data, word2id, tag2id, char_list, val_data_length)
     test_dataloader = generate_iteration(test_data, word2id, tag2id, char_list, test_data_length)
-    logger.info(len(word2id))
+    print(len(word2id))
     lstm_split = LSTMSplit(int(__config["segment"]["embedding_dim"]), int(__config["segment"]["hidden_dim"]), len(word2id), len(tag2id), embedding_list)
     loss_function = nn.NLLLoss(reduce= 0)
     optimizer = optim.SGD(lstm_split.parameters(), lr=0.1)
     if __config["segment"]["cuda"] == "1":
-        logger.info("使用cuda")
-        torch.cuda.set_device(2)
+        print("使用cuda")
+        torch.cuda.set_device(0)
         torch.cuda.manual_seed(int(__config["segment"]["seed"]))  # set random seed for gpu
         lstm_split.cuda()
     for epoch in range(300):
-        logger.info("\n正在进行第{}次迭代".format(epoch))
+        print("\n正在进行第{}次迭代".format(epoch))
         total_loss = 0  # again, normally you would NOT do 300 epochs, it is toy data
         lstm_split.train()
         for batch in tqdm(train_dataloader, desc="Iteration"):
@@ -98,33 +100,35 @@ def main_():
             loss = (loss * mask_mat.cuda()).mean()
             tmp_loss = loss.mean()
             total_loss += tmp_loss
-        logger.info("损失为{}".format(total_loss))
+        print("损失为{}".format(total_loss))
         total_loss = 0
 
         all_tags, all_pre_tags, pre = val(lstm_split, train_dataloader, word2id, tag2id)
-        logger.info("训练集准确率是：")
-        logger.info(pre)
+        print("训练集准确率是：")
+        print(pre)
         # all_tags, all_pre_tags, pre = val(lstm_split, val_dataloader, word2id, tag2id)
-        # logger.info("验证集准确率是：")
-        # logger.info(pre)
-        logger.info("真实情况是：")
-        logger.info(str(all_tags[:50]))
-        logger.info("预测结果是：")
-        logger.info(str(all_pre_tags[:50]))
+        # print("验证集准确率是：")
+        # print(pre)
+        print("真实情况是：")
+        print(str(all_tags[:50]))
+        print("预测结果是：")
+        print(str(all_pre_tags[:50]))
 
 
 def main():
     train_data, val_data, test_data, char_list = get_train_data(data_all= 0)
     for i in train_data:
         if i == None:
-            logger.info(1)
+            print(1)
     word2id, embedding_list, tag2id = get_embedding(char_list)
-    logger.info(len(word2id))
-    lstm_split = LSTMSplit(int(__config["segment"]["embedding_dim"]), int(__config["segment"]["hidden_dim"]), len(word2id), len(tag2id), embedding_list)
+    print(len(word2id))
+    # lstm_split = BiLSTM_CRF(int(__config["segment"]["embedding_dim"]), int(__config["segment"]["hidden_dim"]), len(word2id), len(tag2id), embedding_list)
+    lstm_split = BiLSTM_CRF(len(word2id), tag2id, int(__config["segment"]["embedding_dim"]), int(__config["segment"]["hidden_dim"]),embedding_list)
+
     loss_function = nn.NLLLoss(reduce= 0)
     optimizer = optim.SGD(lstm_split.parameters(), lr=0.1)
     if __config["segment"]["cuda"] == "1":
-        logger.info("使用cuda")
+        print("使用cuda")
         torch.cuda.set_device(2)
         torch.cuda.manual_seed(int(__config["segment"]["seed"]))  # set random seed for gpu
         lstm_split.cuda()
@@ -137,39 +141,64 @@ def main():
     #         tags = tags.cpu()
     #     else:
     #         tag_scores = np.argmax(tag_scores.numpy(), axis=1)
-    #     logger.info(tags.numpy())
-    #     logger.info(tag_scores)
+    #     print(tags.numpy())
+    #     print(tag_scores)
 
     for epoch in range(300):
-        logger.info("\n正在进行第{}次迭代".format(epoch))
+        print("\n正在进行第{}次迭代".format(epoch))
+        adjust_learning_rate(optimizer, epoch)
+        for param_group in optimizer.param_groups:
+            print("学习速度", param_group["lr"])
+        start = time.time()
+
         total_loss = 0  # again, normally you would NOT do 300 epochs, it is toy data
         lstm_split.train()
-
+        i = 0
+        total_loss = 0
+        all_loss = 0
+        sentence_list = []
         for sentence, tags in train_data:
+            i += 1
             # Step 1. Remember that Pytorch accumulates gradients.
             # We need to clear them out before each instance
             lstm_split.zero_grad()
-
+            
             # Also, we need to clear out the hidden state of the LSTM,
             # detaching it from its history on the last instance.
-            lstm_split.hidden = lstm_split.init_hidden()
+            # lstm_split.hidden = lstm_split.init_hidden()
             # Step 2. Get our inputs ready for the network, that is, turn them into
             # Tensors of word indices.
             sentence_in = prepare_sequence(sentence, word2id)
             targets = prepare_sequence(tags, tag2id)
 
             # Step 3. Run our forward pass.
-            tag_scores = lstm_split(sentence_in)
 
+            # a = time.time()  # 初始化隐层
+            # tag_scores = lstm_split(sentence_in)
+            # b = time.time()
+            # print("一批数据的时间", b - a)
             # Step 4. Compute the loss, gradients, and update the parameters by
             #  calling optimizer.step()
-            loss = loss_function(tag_scores, targets)
-            loss = loss.mean()
-            # logger.info(loss)
-            loss.backward()
-            optimizer.step()
+            # loss = loss_function(tag_scores, targets)
+            loss = lstm_split.neg_log_likelihood(sentence_in, targets)
+            # loss = loss.mean()
             total_loss += loss
-        logger.info("损失为{}".format(loss))
+            # print(loss)
+            if i%1 == 0:
+                # total_loss = total_loss/64
+                total_loss.backward()
+                all_loss += total_loss
+                optimizer.step()
+                total_loss = 0
+        if total_loss != 0:
+            # total_loss.backward()
+            # optimizer.step()
+            total_loss = 0
+        all_loss += total_loss
+        end = time.time()
+        print("消耗时间为")
+        print(start - end)
+        print("损失为{}".format(all_loss))
         total_loss = 0
 
     # See what the scores are after training
@@ -181,18 +210,25 @@ def main():
     #             tag_scores = np.argmax(tag_scores.cpu().numpy(), axis=1)
     #         else:
     #             tag_scores = np.argmax(tag_scores.cpu().numpy(), axis=1)
-    #         # logger.info(tag_scores)
+    #         # print(tag_scores)
         all_tags, all_pre_tags, pre = val(lstm_split, train_data, word2id, tag2id)
-        logger.info("训练集准确率是：")
-        logger.info(pre)
-        all_tags, all_pre_tags, pre = val(lstm_split, val_data, word2id, tag2id)
-        logger.info("验证集准确率是：")
-        logger.info(pre)
-        logger.info("真实情况是：")
-        logger.info(str(all_tags[:50]))
-        logger.info("预测结果是：")
-        logger.info(str(all_pre_tags[:50]))
+        print("测试集准确率是：")
+        print(pre)
+        # all_tags, all_pre_tags, pre = val(lstm_split, val_data, word2id, tag2id)
+        # print("验证集准确率是：")
+        # print(pre)
+        print("真实情况是：")
+        print(str(all_tags[:50]))
+        print("预测结果是：")
+        print(str(all_pre_tags[:50]))
 
+
+def adjust_learning_rate(optimizer, epoch):
+    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
+    lr = float(__config["segment"]["lr"])  * (0.1 ** (epoch // 100))
+    # lr = float(__config["segment"]["lr"]) * (0.1 ** (epoch // 30))
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
 
 def val_result(model, val_data, word2id, tag2id):
     model.eval()
@@ -202,7 +238,7 @@ def val_result(model, val_data, word2id, tag2id):
             # lstm_split.hidden = lstm_split.init_hidden()  # 初始化隐层
             sentence_in = prepare_sequence(sentence, word2id)
             # sentence_in = sentence_in.cuda()
-            # logger.info(type(sentence_in))
+            # print(type(sentence_in))
             tags_in = prepare_sequence(tags, tag2id)
             tag_score = model(sentence_in)
             # loss = loss_function(tag_score, tags_in)
@@ -257,16 +293,17 @@ def val(model, val_data, word2id, tag2id):
             # lstm_split.hidden = lstm_split.init_hidden()  # 初始化隐层
             sentence_in = prepare_sequence(sentence, word2id)
             # sentence_in = sentence_in.cuda()
-            # logger.info(type(sentence_in))
+            # print(type(sentence_in))
             tags_in = prepare_sequence(tags, tag2id)
-            tag_score = model(sentence_in, )
+            tag_score = model(sentence_in)[1]
             if __config["segment"]["cuda"] == "1":
-                all_pre_tags += (list(np.argmax(tag_score.cpu().numpy(), axis=1)))
+                # all_pre_tags += (list(np.argmax(tag_score.cpu().numpy(), axis=1)))
+                all_pre_tags += tag_score
                 tags_in = tags_in.cpu()
             else:
-                all_pre_tags += (list(np.argmax(tag_score.numpy(), axis=1)))
+                all_pre_tags += tag_score
             all_tags += list(tags_in.numpy())
-    # logger.info(metrics.flat_classification_report(all_tags, all_pre_tags, labels=[0, 1, 2, 3], digits=3))
+    # print(metrics.flat_classification_report(all_tags, all_pre_tags, labels=[0, 1, 2, 3], digits=3))
     pre = sum([1 if all_tags[i] == all_pre_tags[i] else 0 for i in range(len(all_tags))])/len(all_tags)
     return all_tags, all_pre_tags, pre
 
@@ -274,10 +311,10 @@ def val(model, val_data, word2id, tag2id):
 def tmp():
     a = np.array([[1,2,3,4,5], [1,2,3,4], [1,2,3]])
     b = np.array([[1, 2, 3, 4, 6], [1, 2, 3, 4], [1, 2, 3]])
-    logger.info(metrics.flat_f1_score(a, b, average='weighted', labels= [1,2,3,4,5,6]))
+    print(metrics.flat_f1_score(a, b, average='weighted', labels= [1,2,3,4,5,6]))
     # f1score = np.mean(metrics.f1_score(a, b, average=None))
-    # logger.info(f1score)
-    logger.info(metrics.flat_classification_report(a, b, labels=[1,2,3,4,5,6], digits=3))
+    # print(f1score)
+    print(metrics.flat_classification_report(a, b, labels=[1,2,3,4,5,6], digits=3))
 
 if __name__ == '__main__':
     main()

@@ -12,13 +12,24 @@ import math
 
 import numpy as np
 from sklearn_crfsuite import metrics
-
-a = np.array([[9,2,0],[4,0,0],[5,6,7]])
-# np.sort(a, axis= 0, kind= "quicksort", order= [3, 5, 1])
-order= [2, 1, 3]
-# print(a)
-all_tags = [[1,2,3], [1,2]]
-all_pre_tags = [[1,2,2], [1,2]]
-print(metrics.flat_classification_report(all_tags, all_pre_tags, labels=[0, 1, 2, 3], digits=3))
-F1 = metrics.flat_f1_score(all_tags, all_pre_tags, average='weighted', labels=[0, 1, 2, 3])
-print("F1:", F1)
+import torch as t
+from torch.autograd import Variable as v
+m = v(t.FloatTensor([[2, 3]]), requires_grad=True)
+# j = t.zeros(2 ,2)
+# k = v(t.zeros(1, 2))
+# m.grad.data.zero_()
+# k[0, 0] = m[0, 0] ** 2 + 3 * m[0 ,1]
+# k[0, 1] = m[0, 1] ** 2 + 2 * m[0, 0]
+# simple gradient
+j = t.zeros(2 ,2)
+k = v(t.zeros(1, 2))
+# m.grad.data.zero_()
+k[0, 0] = m[0, 0] ** 2 + 3 * m[0 ,1]
+k[0, 1] = m[0, 1] ** 2 + 2 * m[0, 0]
+k.backward(t.FloatTensor([[1, 0]]), retain_variables=True)
+j[:, 0] = m.grad.data
+m.grad.data.zero_()
+k.backward(t.FloatTensor([[0, 1]]))
+j[:, 1] = m.grad.data
+print('jacobian matrix is')
+print(j)

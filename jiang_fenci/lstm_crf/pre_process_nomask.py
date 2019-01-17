@@ -31,7 +31,7 @@ TEST_DATA_PATH = __config["segment"]["lstm_test_data"]
 VAL_DATA_PATH = __config["segment"]["lstm_val_data"]
 
 def get_embedding(char_list):
-    tag2id = {"B":0, "E":1, "O":2, "S":3}
+    tag2id = {"B":0, "E":1, "O":2, "S":3, "<START>": 4, "<STOP>": 5}
     path = ROOT_DATA + EMBEDDING_ROOT
     if  os.path.exists(path):
         embedding_file = open(path, 'rb')

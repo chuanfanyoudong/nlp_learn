@@ -31,7 +31,7 @@ TEST_DATA_PATH = __config["segment"]["lstm_test_data"]
 VAL_DATA_PATH = __config["segment"]["lstm_val_data"]
 
 def get_embedding(char_list):
-    tag2id = {"B":0, "E":1, "O":2, "S":3, "T":4}
+    tag2id = {"B":0, "E":1, "O":2, "S":3, "<pad>":4}
     path = ROOT_DATA + EMBEDDING_ROOT
     if  os.path.exists(path):
         embedding_file = open(path, 'rb')
@@ -145,7 +145,7 @@ def generate_iteration(data, word2id, tag2id, char_list, data_length):
         [[tag2id[tag] if tag in tag2id else tag2id["<unk>"] for tag in single_data[1]] for single_data in data])
     length = torch.tensor(data_length)
     tensor_data = TensorDataset(x, y, length)
-    dataloader = DataLoader(tensor_data, batch_size=int(__config["segment"]["lstm_batch_size"]))
+    dataloader = DataLoader(tensor_data, batch_size=  int(__config["segment"]["lstm_batch_size"]),  shuffle  = True)
     return dataloader
 
 
@@ -176,7 +176,7 @@ def process_line(line = "", max_length = 581):
     # real_length = 581
     while len(list_sentence) < max_length:
         list_sentence.append("<pad>")
-        tag_list.append("T")
+        tag_list.append("<pad>")
     if len(list_sentence) != len(tag_list) or len(list_sentence) > 581:
         print(list_sentence)
         raise Exception("数据处理出错")

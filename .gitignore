@@ -4,3 +4,4 @@ nlp_base/*
 *.log
 jieba_git/*
 *.pyc
+*.txt
