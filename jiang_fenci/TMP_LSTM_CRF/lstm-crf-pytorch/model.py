@@ -2,6 +2,17 @@ import torch
 import torch.nn as nn
 
 UNIT = "char" # unit for tokenization (char, word)
+BATCH_SIZE = 64
+EMBED_SIZE = 300
+HIDDEN_SIZE = 1000
+NUM_LAYERS = 2
+DROPOUT = 0.5
+BIDIRECTIONAL = True
+NUM_DIRS = 2 if BIDIRECTIONAL else 1
+LEARNING_RATE = 0.01
+WEIGHT_DECAY = 1e-4
+SAVE_EVERY = 1
+
 PAD = "<PAD>" # padding
 SOS = "<SOS>" # start of sequence
 EOS = "<EOS>" # end of sequence
@@ -16,10 +27,10 @@ torch.manual_seed(1)
 CUDA = torch.cuda.is_available()
 
 class lstm_crf(nn.Module):
-    def __init__(self, vocab_size, num_tags, HIDDEN_SIZE, EMBED_SIZE, BATCH_SIZE, NUM_DIRS, NUM_LAYERS, vectors,padding_idx, BIDIRECTIONAL = 1, DROPOUT = 0.5):
+    def __init__(self, vocab_size, num_tags):
         super().__init__()
-        self.lstm = lstm(vocab_size, num_tags, EMBED_SIZE, HIDDEN_SIZE, NUM_DIRS, NUM_LAYERS, vectors, padding_idx, BIDIRECTIONAL, DROPOUT)
-        self.crf = crf(num_tags, BATCH_SIZE)
+        self.lstm = lstm(vocab_size, num_tags)
+        self.crf = crf(num_tags)
         self = self.cuda() if CUDA else self
 
     def forward(self, x, y): # for training
@@ -35,12 +46,11 @@ class lstm_crf(nn.Module):
         return self.crf.decode(h, mask)
 
 class lstm(nn.Module):
-    def __init__(self, vocab_size, num_tags, EMBED_SIZE, HIDDEN_SIZE, NUM_DIRS, NUM_LAYERS, vectors, padding_idx, BIDIRECTIONAL = 1, DROPOUT = 0.5):
+    def __init__(self, vocab_size, num_tags):
         super().__init__()
 
         # architecture
-        self.embed = nn.Embedding(vocab_size, EMBED_SIZE)
-        self.embed.weight.data.copy_(torch.tensor(vectors))
+        self.embed = nn.Embedding(vocab_size, EMBED_SIZE, padding_idx = PAD_IDX)
         self.lstm = nn.LSTM(
             input_size = EMBED_SIZE,
             hidden_size = HIDDEN_SIZE // NUM_DIRS,
@@ -53,9 +63,8 @@ class lstm(nn.Module):
         self.out = nn.Linear(HIDDEN_SIZE, num_tags) # LSTM output to tag
 
     def init_hidden(self): # initialize hidden states
-        h = zeros(
-            self.NUM_LAYERS * self.NUM_DIRS, self.BATCH_SIZE, self.HIDDEN_SIZE // self.NUM_DIRS) # hidden states
-        c = zeros(self.NUM_LAYERS * self.NUM_DIRS, BATCH_SIZE, self.HIDDEN_SIZE // self.NUM_DIRS) # cell states
+        h = zeros(NUM_LAYERS * NUM_DIRS, BATCH_SIZE, HIDDEN_SIZE // NUM_DIRS) # hidden states
+        c = zeros(NUM_LAYERS * NUM_DIRS, BATCH_SIZE, HIDDEN_SIZE // NUM_DIRS) # cell states
         return (h, c)
 
     def forward(self, x, mask):
@@ -71,10 +80,10 @@ class lstm(nn.Module):
         return h
 
 class crf(nn.Module):
-    def __init__(self, num_tags, BATCH_SIZE):
+    def __init__(self, num_tags):
         super().__init__()
         self.num_tags = num_tags
-        self.BATCH_SIZE = BATCH_SIZE
+
         # matrix of transition scores from j to i
         self.trans = nn.Parameter(randn(num_tags, num_tags))
         self.trans.data[SOS_IDX, :] = -10000. # no transition to SOS
@@ -86,7 +95,7 @@ class crf(nn.Module):
 
     def forward(self, h, mask): # forward algorithm
         # initialize forward variables in log space
-        score = Tensor(self.BATCH_SIZE, self.num_tags).fill_(-10000.) # [B, C]
+        score = Tensor(BATCH_SIZE, self.num_tags).fill_(-10000.) # [B, C]
         score[:, SOS_IDX] = 0.
         trans = self.trans.unsqueeze(0) # [1, C, C]
         for t in range(h.size(1)): # recursion through the sequence
@@ -99,7 +108,7 @@ class crf(nn.Module):
         return score # partition function
 
     def score(self, h, y, mask): # calculate the score of a given sequence
-        score = Tensor(self.BATCH_SIZE).fill_(0.)
+        score = Tensor(BATCH_SIZE).fill_(0.)
         h = h.unsqueeze(3)
         y = y[:, :h.size(1) + 1]
         trans = self.trans.unsqueeze(2)
@@ -121,7 +130,7 @@ class crf(nn.Module):
     def decode(self, h, mask): # Viterbi decoding
         # initialize backpointers and viterbi variables in log space
         bptr = LongTensor()
-        score = Tensor(1, self.num_tags).fill_(-10000.)
+        score = Tensor(BATCH_SIZE, self.num_tags).fill_(-10000.)
         score[:, SOS_IDX] = 0.
 
         for t in range(h.size(1)): # recursion through the sequence
@@ -137,7 +146,7 @@ class crf(nn.Module):
         # back-tracking
         bptr = bptr.tolist()
         best_path = [[i] for i in best_tag.tolist()]
-        for b in range(1):
+        for b in range(BATCH_SIZE):
             x = best_tag[b] # best tag
             y = int(mask[b].sum().item())
             for bptr_t in reversed(bptr[b][:y]):
@@ -145,6 +154,7 @@ class crf(nn.Module):
                 best_path[b].append(x)
             best_path[b].pop()
             best_path[b].reverse()
+
         return best_path
 
 def Tensor(*args):

@@ -18,7 +18,7 @@ from jiang_fenci.hmm_segment.segment.model import Segment
 from jiang_fenci.lstm_crf.simple_model_test import ModelMain
 mm = ModelMain()
 tg = TokenGet()
-print(mm.main(sentence))
+# print(mm.main(sentence))
 hmm_sg = Segment()
 # print(hmm_sg.cut())
 # hmm_sg = TokenGet()
@@ -29,9 +29,8 @@ ROOT = __config["path"]["root"]
 SPLIT_DATA = __config["path"]["split_data"]
 # print(ROOT)
 
-def segment_test(file = "pku", train = False, train_file = "pku", test_function = tg.main):
+def segment_test(file = "msr", train = False, train_file = "pku", test_function = tg.main, **param):
     writer= open("result.txt", "w", encoding= "utf-8")
-
     origin_file = file + "_origin.utf8"
     segment_file = file + "_segment.utf8"
     # print(test_function("我是好人"))
@@ -49,13 +48,14 @@ def segment_test(file = "pku", train = False, train_file = "pku", test_function 
         segment_file_list = open(ROOT + SPLIT_DATA + segment_file, "r", encoding="utf-8").readlines()
         for i in range(len(origin_file_list)):
             # try:
-            test_segment = test_function(origin_file_list[i].strip(), reverse = True)
+            test_segment = test_function(sentence = origin_file_list[i].strip(), **param)
             writer.write("  ".join(test_segment) + "\n")
-            if test_segment == []:
-                break
+            # if test_segment == []:
+            #     continue
             real_segment = segment_file_list[i].strip().split("  ")
-            # print(test_segment)
-            # print(real_segment)
+            # if real_segment and test_segment:
+                # print(test_segment)
+                # print(real_segment)
             REAL += len(real_segment)
             POSITIVE += len(test_segment)
             test_segment_dict = trans_list(test_segment)
@@ -63,10 +63,16 @@ def segment_test(file = "pku", train = False, train_file = "pku", test_function 
             for i in real_segment_dict:
                 if i in test_segment_dict and test_segment_dict[i] == real_segment_dict[i]:
                     TP += 1
-        RECAL = TP/REAL
-        PRECITION = TP/POSITIVE
-        F1 = 2 * TP /(REAL + POSITIVE)
+        if TP == 0:
+            RECAL = 0
+            POSITIVE = 0
+            F1 = 0
+        else:
+            RECAL = TP/REAL
+            PRECITION = TP/POSITIVE
+            F1 = 2 * TP /(REAL + POSITIVE)
         print("数据集{}\n准确率:{}\n召回率:{}\nF1:{}\n".format(data, PRECITION, RECAL, F1))
+        return F1
 
         # print(test_line_dict)
 
@@ -80,7 +86,7 @@ def trans_list(segment_list):
     return segment_dict
 
 
-segment_test(test_function = tg.main, file= "msr")
+# segment_test(test_function = tg.main, file= "msr")
 
 
 

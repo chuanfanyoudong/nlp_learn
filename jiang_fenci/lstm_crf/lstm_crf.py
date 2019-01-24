@@ -19,9 +19,9 @@ def prepare_sequence(seq, to_ix):
 
 # Compute log sum exp in a numerically stable way for the forward algorithm
 def log_sum_exp(vec):
-    max_score = vec[0, argmax(vec)]
+    max_score = vec[0, argmax(vec)]  # 找其中的最大值
     max_score_broadcast = max_score.view(1, -1).expand(1, vec.size()[1])
-    return max_score + torch.log(torch.sum(torch.exp(vec - max_score_broadcast)))
+    return max_score + torch.log(torch.sum(torch.exp(vec - max_score_broadcast)))  # 这里就是一个公式的转化，相当于“torch.log(torch.sum(torch.exp(vec))) ”
 
 
 
@@ -75,17 +75,17 @@ class BiLSTM_CRF(nn.Module):
                 # broadcast the emission score: it is the same regardless of
                 # the previous tag
                 emit_score = feat[next_tag].view(
-                    1, -1).expand(1, self.tagset_size)
+                    1, -1).expand(1, self.tagset_size)  # 发射概率，从前一个节点
                 # the ith entry of trans_score is the score of transitioning to
                 # next_tag from i
-                trans_score = self.transitions[next_tag].view(1, -1)
+                trans_score = self.transitions[next_tag].view(1, -1)  # 从前一个节点的转移概率
                 # The ith entry of next_tag_var is the value for the
                 # edge (i -> next_tag) before we do log-sum-exp
                 next_tag_var = forward_var + trans_score + emit_score
                 # The forward variable for this tag is log-sum-exp of all the
                 # scores.
                 alphas_t.append(log_sum_exp(next_tag_var).view(1))
-            forward_var = torch.cat(alphas_t).view(1, -1)
+            forward_var = torch.cat(alphas_t).view(1, -1)  ## 更新这一层的得分
         terminal_var = forward_var + self.transitions[self.tag_to_ix[STOP_TAG]]
         alpha = log_sum_exp(terminal_var)
         return alpha
