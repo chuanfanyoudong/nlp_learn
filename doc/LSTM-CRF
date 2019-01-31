@@ -1,0 +1,10 @@
+## LSTM-CRF
+
+## 链接
+
+- https://zhuanlan.zhihu.com/p/27338210
+- https://blog.csdn.net/cuihuijun1hao/article/details/79405740
+
+## trick
+
+- 这里用一种简便的方法，对于到词w_{i+1}的路径，可以先把到词w_i的logsumexp计算出来
