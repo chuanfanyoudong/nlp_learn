@@ -1,0 +1,153 @@
+## TFIDF解释与简单实现
+
+## TFIDF介绍
+
+- 本文所讲的所有例子均为一下例子
+
+```angular2html
+corpus = [["我","a","e"],["我","a","c"],["我","a","b"]]
+```
+
+TFIDF全程叫做term frequency–inverse document frequency，翻译过来可以叫做文本频率与逆文档频率指数, TFIDF就是为了表征一个token（可以是一个字或者一个词）的重要程度，
+所以如果这个token出现的频数很高，会更重要一点吧，这很好理解，那么出现的频数这个因素就叫做TF
+
+但是问题来了，“的”，“了”，“吗”这种词，在文本中出现的频数也很高，那么是不是也很重要的，当然不是的，因为这些词在每一条文档中都会出现，所以就没那么重要了，在每个类别中都出现了“的”，我就没法把“的”作为我分类的一个重要指标，所以有了下一个概念，就是我这个词
+尽可能的只在某几条文档中出现过，那样才会更有区分性对吧，所以逆文档频率指数应运而生，公式是：log(所有的文档条数/有这个词的文档条数)，这个也比较好理解
+
+分开解释：
+
+> 文本频率，就是我统计的语料中词语出现的次数与所有词语的总数的比值，比如在上述例子中，一共有五个词（我，a,b,c,e）
+所有词汇总数是5，其中“c”这个字出现了1次，所以“我”的文本频率是1/5，其他依次类推
+
+> 逆文档频率,就是所有文档的条数与有某词的文档条数的比值的对数，比如上述例子中，文档总数是3条，出现“c”的是第二条，总共一条，所以“c”的
+逆文档频率指数就是log(3/1),在实际操作中，我们会加平滑因子，防止统计数为0这种情况出现
+
+我们知道了文本频率和逆文档频率指数那么我们把这两个结果相乘，就是这个词的权重，比如"c"的TFIDF值就是1/5 * log(3/1)
+
+我们对每个词都做一下这样的计算，最后得到的是一个样品数量 * 唯一token总数维度的矩阵，在例子中样本数量为3，唯一token总数为5，那么我们会得到一个3*5的矩阵，如果这一条文档中没有这个词就直接赋值0就可以了。
+
+下面是对上述词汇统计的矩阵：
+（）
+```angular2html
+
+
+统计个数：
+{'我': 3, 'a': 3, 'e': 1, 'c': 1, 'b': 1}
+token编号：
+{'我': 0, 'a': 1, 'e': 2, 'c': 3, 'b': 4}
+TFIDF矩阵
+[[0.6        0.6        0.41972246 0.         0.        ]
+ [0.6        0.6        0.         0.41972246 0.        ]
+ [0.6        0.6        0.         0.         0.41972246]]
+
+```
+
+
+## TFIDF实现
+
+只说不练假把式，下面做了一个简单的实现：
+
+完成代码
+
+```angular2html
+
+#!/usr/bin/env python 
+# encoding: utf-8 
+
+"""
+@author: zkjiang
+@site: https://www.github.com
+@software: PyCharm
+@file: TFIDF.py
+@time: 2019/2/2 12:33
+"""
+
+import numpy as np
+
+class TFIDF(object):
+
+    """
+    手写一个TFIDF统计类,只写最简单的一个实现
+    """
+
+    def __init__(self, corpus):
+        """
+        初始化
+        self.vob:词汇个数统计，dict格式
+        self.word_id:词汇编码id，dict格式
+        self.smooth_idf：平滑系数，关于平滑不多解释了
+        :param corpus:输入的语料
+        """
+        self.word_id = {}
+        self.vob = {}
+        self.corpus = corpus
+        self.smooth_idf = 0.01
+
+    def fit_transform(self, corpus):
+        pass
+
+    def get_vob_fre(self):
+        """
+        计算文本特特征的出现次数，也就是文本频率term frequency，但是没有除token总数，因为后面bincount计算不支持float
+        :return: 修改self.vob也就是修改词频统计字典
+        """
+        # 统计各词出现个数
+        id = 0
+        for single_corpus in self.corpus:
+            if isinstance(single_corpus, list):
+                pass
+            if isinstance(single_corpus, str):
+                single_corpus = single_corpus.strip("\n").split(" ")
+            for word in single_corpus:
+                if word not in self.vob:
+                    self.vob[word] = 1
+                    self.word_id[word] = id
+                    id += 1
+                else:
+                    self.vob[word] += 1
+
+        # 生成矩阵
+        X = np.zeros((len(self.corpus), len(self.vob)))
+        for i in range(len(self.corpus)):
+            if isinstance(self.corpus[i], str):
+                single_corpus = self.corpus[i].strip("\n").split(" ")
+            else:
+                single_corpus = self.corpus[i]
+            for j in range(len(single_corpus)):
+                feature = single_corpus[j]
+                feature_id = self.word_id[feature]
+                X[i, feature_id] = self.vob[feature]
+        return X.astype(int)  # 需要转化成int
+
+
+    def get_tf_idf(self):
+        """
+        计算idf并生成最后的TFIDF矩阵
+        :return:
+        """
+        X = self.get_vob_fre()
+        n_samples, n_features = X.shape
+        df = []
+        for i in range(n_features):
+            """
+            这里是统计每个特征的非0的数量，也就是逆文档频率指数的分式中的分母，是为了计算idf
+            """
+            df.append(n_samples - np.bincount(X[:,i])[0])
+        df = np.array(df)
+        # perform idf smoothing if required
+        df += int(self.smooth_idf)
+        n_samples += int(self.smooth_idf)
+        idf = np.log(n_samples / df) + 1  # 核心公式
+        # print(self.vob)
+        # print(self.word_id)
+        return X*idf/len(self.vob)
+
+
+
+if __name__ == '__main__':
+    corpus = [["我","a","e"],["我","a","c"],["我","a","b"]]
+    test = TFIDF(corpus)
+    # print(test.get_vob_fre())
+    print(test.get_tf_idf())
+
+```
