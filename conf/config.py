@@ -14,8 +14,13 @@
 """
 
 import os
-ROOT = "/".join(os.path.abspath(__file__).split("/")[:-2])
-CONFIG_PATH = "/".join(os.path.abspath(__file__).split("/")[:-1]) + "/config.conf"
+
+real_path = os.path.abspath(__file__)
+if "/" in real_path:
+    ROOT = "/".join(os.path.abspath(__file__).split("/")[:-2])
+if "\\" in real_path:
+    ROOT = "/".join(os.path.abspath(__file__).split("\\")[:-2])
+CONFIG_PATH = ROOT+ "/conf/config.conf"
 path = os.path.abspath(__file__)
 
 # print(CONFIG_PATH)

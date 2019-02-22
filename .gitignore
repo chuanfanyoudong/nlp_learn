@@ -5,3 +5,5 @@ nlp_base/*
 jieba_git/*
 *.pyc
 *.txt
+*.dat
+*.data

@@ -1,0 +1,40 @@
+# SVM
+
+标签（空格分隔）： 机器学习
+
+---
+
+![image_1d47ingi3b3m1a4f1mgqhvpfnu1m.png-924.1kB][1]
+![image_1d49cqo2f1a5r1dpe1fks1urtka9.png-300.9kB][2]
+![image_1d47k1mib1so01s9vr2qr8a1uk82r.png-834.6kB][3]
+![image_1d47k2eatnral8ccul1oapvnd38.png-747kB][4]
+![image_1d47k2vuirqpj461ql31fs41qdi3l.png-704.2kB][5]
+![image_1d47k3gpheqr111u1lnnknh1h5h42.png-861.3kB][6]
+![image_1d47k3ufhg6r1od91172qcv714f.png-633.8kB][7]
+![image_1d49go14sn1l9kc1sc5thd17hl20.png-298.7kB][8]
+![image_1d49gnako1d331ndpkscqp84hc16.png-225.3kB][9]
+![image_1d49gnmrj1h2tcde8m9f3n13lj1j.png-121.5kB][10]
+
+
+## 损失函数
+
+- 合页损失
+
+## 优化目标
+
+- 几何间隔最大 == 极小化正则化合页损失函数
+
+## 学习算法
+
+- SMO
+
+  [1]: http://static.zybuluo.com/chuanfanyoudong/xufcs96wpw4gchwc7ryy1s38/image_1d47ingi3b3m1a4f1mgqhvpfnu1m.png
+  [2]: http://static.zybuluo.com/chuanfanyoudong/syx85n8zxr4c4li660wa4e0j/image_1d49cqo2f1a5r1dpe1fks1urtka9.png
+  [3]: http://static.zybuluo.com/chuanfanyoudong/enqniu0n3bfbjao7jsv3e342/image_1d47k1mib1so01s9vr2qr8a1uk82r.png
+  [4]: http://static.zybuluo.com/chuanfanyoudong/mqnoirdtzfe1v3xo6s2yzwfb/image_1d47k2eatnral8ccul1oapvnd38.png
+  [5]: http://static.zybuluo.com/chuanfanyoudong/wpulglseu4d17lpm7q8ez1hj/image_1d47k2vuirqpj461ql31fs41qdi3l.png
+  [6]: http://static.zybuluo.com/chuanfanyoudong/fh0zcoy9mpf23rssqhs2itom/image_1d47k3gpheqr111u1lnnknh1h5h42.png
+  [7]: http://static.zybuluo.com/chuanfanyoudong/cirnbid5b0uggzll22rqrjdn/image_1d47k3ufhg6r1od91172qcv714f.png
+  [8]: http://static.zybuluo.com/chuanfanyoudong/jupc0ai5s0kesiqtkv8uo7ck/image_1d49go14sn1l9kc1sc5thd17hl20.png
+  [9]: http://static.zybuluo.com/chuanfanyoudong/57gp5jk9nlhz73rme4ngcjxz/image_1d49gnako1d331ndpkscqp84hc16.png
+  [10]: http://static.zybuluo.com/chuanfanyoudong/8gh67n3849fmyjriz6mi3lf0/image_1d49gnmrj1h2tcde8m9f3n13lj1j.png

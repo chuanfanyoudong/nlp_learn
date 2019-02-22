@@ -9,6 +9,9 @@
 @time: 2019/2/20 17:20
 """
 
+
+## 摘抄的别人的手写SVM
+
 #coding=utf-8
 #Author:Dodo
 #Date:2018-12-03
@@ -28,6 +31,12 @@ import time
 import numpy as np
 import math
 import random
+
+from conf.config import get_config
+__config = get_config()
+ROOT = __config["path"]["root"]
+MINIST_TRAIN_PATH = ROOT + __config["traditional_ml"]["minist_train_path"]
+MINIST_TEST_PATH = ROOT + __config["traditional_ml"]["minist_test_path"]
 
 def loadData(fileName):
     '''
@@ -418,11 +427,11 @@ if __name__ == '__main__':
 
     # 获取训练集及标签
     print('start read transSet')
-    trainDataList, trainLabelList = loadData('../Mnist/mnist_train.csv')
+    trainDataList, trainLabelList = loadData(MINIST_TRAIN_PATH)
 
     # 获取测试集及标签
     print('start read testSet')
-    testDataList, testLabelList = loadData('../Mnist/mnist_test.csv')
+    testDataList, testLabelList = loadData(MINIST_TEST_PATH)
 
     #初始化SVM类
     print('start init SVM')
