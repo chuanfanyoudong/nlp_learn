@@ -7,3 +7,4 @@ jieba_git/*
 *.txt
 *.dat
 *.data
+*.pyc

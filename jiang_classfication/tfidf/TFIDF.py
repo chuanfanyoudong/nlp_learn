@@ -29,6 +29,7 @@ class TFIDF(object):
         self.vob = {}
         self.corpus = corpus
         self.smooth_idf = 0.01
+        self.matrics = []
 
     def fit_transform(self, corpus):
         pass
@@ -86,13 +87,32 @@ class TFIDF(object):
         n_samples += int(self.smooth_idf)
         idf = np.log(n_samples / df) + 1  # 核心公式
         # print(self.vob)
+        self.matrics = X*idf/len(self.vob)
         # print(self.word_id)
         return X*idf/len(self.vob)
 
+    def print_result(self):
+        """
+        打印函数，打印生成的矩阵信息等等
+        :return:
+        """
+        print("最终结果")
+        print(self.matrics)
+        print("\n\n")
+        print("词的id对应信息")
+        print(self.word_id)
+        print("\n\n")
+        for i in range(len(self.corpus)):
+            print("测试集中的第{}句话".format(i))
+            print(self.corpus[i])
+            print("对应的tfidf向量为：")
+            print(self.matrics[i])
+            print("\n")
 
 
 if __name__ == '__main__':
     corpus = [["我","a","e"],["我","a","c"],["我","a","b"]]
     test = TFIDF(corpus)
     # print(test.get_vob_fre())
-    print(test.get_tf_idf())
+    test.get_tf_idf()
+    test.print_result()
