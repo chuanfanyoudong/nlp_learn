@@ -101,7 +101,7 @@ class Data:
         self.HP_l2 = 1e-8
         self.average_batch_loss = False
         self.tagScheme = "Not sequence labeling task"
-        self.seg = True
+        self.seg = False
 
     def show_data_summary(self):
         """
@@ -205,7 +205,7 @@ class Data:
             self.HP_iteration = int(config_dict[the_item])
         the_item = 'seg'
         if the_item in config_dict:
-            self.seg = bool(config_dict[the_item])
+            self.seg = bool(int(config_dict[the_item]))
         # 是否使用字符级别特征
         the_item = 'use_char'
         if the_item in config_dict:

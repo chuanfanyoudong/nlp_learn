@@ -9,9 +9,16 @@
 from __future__ import print_function
 import sys
 
-
+from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
+y_true = ["1","1","1"]
+y_pred = ["1","1","1"]
+f1 = f1_score(y_true, y_pred, average='macro')
+print(f1)
 
 ## input as sentence level labels
+from sklearn.metrics import classification_report
+
+
 def get_ner_fmeasure(golden_lists, predict_lists, label_type="BMES"):
     sent_num = len(golden_lists)
     golden_full = []
@@ -19,49 +26,12 @@ def get_ner_fmeasure(golden_lists, predict_lists, label_type="BMES"):
     right_full = []
     right_tag = 0
     all_tag = 0
-    for idx in range(0,sent_num):
-        # word_list = sentence_lists[idx]
-        golden_list = golden_lists[idx]
-        predict_list = predict_lists[idx]
-        for idy in range(len(golden_list)):
-            if golden_list[idy] == predict_list[idy]:
-                right_tag += 1
-        all_tag += len(golden_list)
-        if label_type == "BMES" or label_type == "BIOES":
-            gold_matrix = get_ner_BMES(golden_list)
-            pred_matrix = get_ner_BMES(predict_list)
-        else:
-            gold_matrix = get_ner_BIO(golden_list)
-            pred_matrix = get_ner_BIO(predict_list)
-        # print "gold", gold_matrix
-        # print "pred", pred_matrix
-        right_ner = list(set(gold_matrix).intersection(set(pred_matrix)))
-        golden_full += gold_matrix
-        predict_full += pred_matrix
-        right_full += right_ner
-    right_num = len(right_full)
-    golden_num = len(golden_full)
-    predict_num = len(predict_full)
-    if predict_num == 0:
-        precision = -1
-    else:
-        precision =  (right_num+0.0)/predict_num
-    if golden_num == 0:
-        recall = -1
-    else:
-        recall = (right_num+0.0)/golden_num
-    if (precision == -1) or (recall == -1) or (precision+recall) <= 0.:
-        f_measure = -1
-    else:
-        f_measure = 2*precision*recall/(precision+recall)
-    accuracy = (right_tag+0.0)/all_tag
-    # print "Accuracy: ", right_tag,"/",all_tag,"=",accuracy
-    if  label_type.upper().startswith("B-"):
-        print("gold_num = ", golden_num, " pred_num = ", predict_num, " right_num = ", right_num)
-    else:
-        print("Right token = ", right_tag, " All token = ", all_tag, " acc = ", accuracy)
-    return accuracy, precision, recall, f_measure
-
+    # print("姜振康"*6)
+    f1 = f1_score(golden_lists, predict_lists, average='macro')
+    p = precision_score(golden_lists, predict_lists, average='macro')
+    r = recall_score(golden_lists, predict_lists, average='macro')
+    a = accuracy_score(golden_lists, predict_lists)
+    return a, p, r, f1
 
 def reverse_style(input_string):
     target_position = input_string.index('[')

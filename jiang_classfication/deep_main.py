@@ -62,25 +62,25 @@ def recover_label(pred_variable, gold_variable, mask_variable, label_alphabet, w
     gold_variable = gold_variable[word_recover]
     mask_variable = mask_variable[word_recover]
     batch_size = gold_variable.size(0)
-    if sentence_classification:
-        pred_tag = pred_variable.cpu().data.numpy().tolist()
-        gold_tag = gold_variable.cpu().data.numpy().tolist()
-        pred_label = [label_alphabet.get_instance(pred) for pred in pred_tag]
-        gold_label = [label_alphabet.get_instance(gold) for gold in gold_tag]
-    else:
-        seq_len = gold_variable.size(1)
-        mask = mask_variable.cpu().data.numpy()
-        pred_tag = pred_variable.cpu().data.numpy()
-        gold_tag = gold_variable.cpu().data.numpy()
-        batch_size = mask.shape[0]
-        pred_label = []
-        gold_label = []
-        for idx in range(batch_size):
-            pred = [label_alphabet.get_instance(pred_tag[idx][idy]) for idy in range(seq_len) if mask[idx][idy] != 0]
-            gold = [label_alphabet.get_instance(gold_tag[idx][idy]) for idy in range(seq_len) if mask[idx][idy] != 0]
-            assert(len(pred)==len(gold))
-            pred_label.append(pred)
-            gold_label.append(gold)
+    # if sentence_classification:
+    pred_tag = pred_variable.cpu().data.numpy().tolist()
+    gold_tag = gold_variable.cpu().data.numpy().tolist()
+    pred_label = [label_alphabet.get_instance(pred) for pred in pred_tag]
+    gold_label = [label_alphabet.get_instance(gold) for gold in gold_tag]
+    # else:
+    #     seq_len = gold_variable.size(1)
+    #     mask = mask_variable.cpu().data.numpy()
+    #     pred_tag = pred_variable.cpu().data.numpy()
+    #     gold_tag = gold_variable.cpu().data.numpy()
+    #     batch_size = mask.shape[0]
+    #     pred_label = []
+    #     gold_label = []
+    #     for idx in range(batch_size):
+    #         pred = [label_alphabet.get_instance(pred_tag[idx][idy]) for idy in range(seq_len) if mask[idx][idy] != 0]
+    #         gold = [label_alphabet.get_instance(gold_tag[idx][idy]) for idy in range(seq_len) if mask[idx][idy] != 0]
+    #         assert(len(pred)==len(gold))
+    #         pred_label.append(pred)
+    #         gold_label.append(gold)
     return pred_label, gold_label
 
 
@@ -130,6 +130,15 @@ def lr_decay(optimizer, epoch, decay_rate, init_lr):
 
 
 def evaluate(data, model, name, nbest=None):
+    """
+    评估函数，评估模型的效果
+    :param data:
+    :param model:
+    :param name: 训练、验证、还是测试
+    :param nbest:
+    :return:
+    """
+    # 判断要评估的类型
     if name == "train":
         instances = data.train_Ids
     elif name == "dev":
@@ -144,34 +153,26 @@ def evaluate(data, model, name, nbest=None):
     right_token = 0
     whole_token = 0
     nbest_pred_results = []
-    pred_scores = []
-    pred_results = []
-    gold_results = []
-    ## set model in eval model
+    pred_scores = [] # 预测得分
+    pred_results = [] # 预测结果
+    gold_results = [] # 正确结果
+    #
     model.eval()
-    batch_size = data.HP_batch_size
-    start_time = time.time()
-    train_num = len(instances)
-    total_batch = train_num//batch_size+1
+    batch_size = data.HP_batch_size # 记录batch_size的值
+    start_time = time.time() # 记录评估开始的时间
+    train_num = len(instances) # 数据集数量
+    total_batch = train_num//batch_size+1 # batch数量
     for batch_id in range(total_batch):
         start = batch_id*batch_size
         end = (batch_id+1)*batch_size
         if end > train_num:
             end =  train_num
         instance = instances[start:end]
-        if not instance:
+        if not instance: # 如果一个batch是空，那么跳过，继续循环
             continue
         batch_word, batch_features, batch_wordlen, batch_wordrecover, batch_char, batch_charlen, batch_charrecover, batch_label, mask  = batchify_with_label(instance, data.HP_gpu, False, data.sentence_classification)
-        if nbest and not data.sentence_classification:
-            scores, nbest_tag_seq = model.decode_nbest(batch_word,batch_features, batch_wordlen, batch_char, batch_charlen, batch_charrecover, mask, nbest)
-            nbest_pred_result = recover_nbest_label(nbest_tag_seq, mask, data.label_alphabet, batch_wordrecover)
-            nbest_pred_results += nbest_pred_result
-            pred_scores += scores[batch_wordrecover].cpu().data.numpy().tolist()
-            ## select the best sequence to evalurate
-            tag_seq = nbest_tag_seq[:,:,0]
-        else:
-            tag_seq = model(batch_word, batch_features, batch_wordlen, batch_char, batch_charlen, batch_charrecover, mask)
-        # print("tag:",tag_seq)
+        tag_seq = model(batch_word, batch_features, batch_wordlen, batch_char, batch_charlen, batch_charrecover, mask)
+        # 输出预测结果和实际结果
         pred_label, gold_label = recover_label(tag_seq, batch_label, mask, data.label_alphabet, batch_wordrecover, data.sentence_classification)
         pred_results += pred_label
         gold_results += gold_label
@@ -468,24 +469,24 @@ def train(data):
         dev_finish = time.time()
         # 记录
         dev_cost = dev_finish - epoch_finish
-
+        # 判断输出的是准确率还是F1
         if data.seg:
             current_score = f
             print("Dev: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(dev_cost, speed, acc, p, r, f))
         else:
             current_score = acc
             print("Dev: time: %.2fs speed: %.2fst/s; acc: %.4f"%(dev_cost, speed, acc))
-
+        # 如果当前模型比较好，那么存储当前模型
         if current_score > best_dev:
             if data.seg:
                 print("Exceed previous best f score:", best_dev)
             else:
                 print("Exceed previous best acc score:", best_dev)
-            model_name = data.model_dir +'.'+ str(idx) + ".model"
+            model_name = data.model_dir +'.'+ str(idx) + str(best_dev)[:5] + ".model"
             print("Save current best model in file:", model_name)
             torch.save(model.state_dict(), model_name)
             best_dev = current_score
-        # ## decode test
+        # 记录测试集的效果
         speed, acc, p, r, f, _,_ = evaluate(data, model, "test")
         test_finish = time.time()
         test_cost = test_finish - dev_finish
@@ -510,7 +511,6 @@ def load_model_decode(data, name):
     #     model.load_state_dict(torch.load(model_dir))
     #     # model = torch.load(model_dir)
     model.load_state_dict(torch.load(data.load_model_dir))
-
     print("Decode %s data, nbest: %s ..."%(name, data.nbest))
     start_time = time.time()
     speed, acc, p, r, f, pred_results, pred_scores = evaluate(data, model, name, data.nbest)
