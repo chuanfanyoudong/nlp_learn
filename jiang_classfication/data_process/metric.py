@@ -10,10 +10,7 @@ from __future__ import print_function
 import sys
 
 from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
-y_true = ["1","1","1"]
-y_pred = ["1","1","1"]
-f1 = f1_score(y_true, y_pred, average='macro')
-print(f1)
+
 
 ## input as sentence level labels
 from sklearn.metrics import classification_report

@@ -49,9 +49,12 @@ class WordRep(nn.Module):
         self.feature_num = data.feature_num
         self.feature_embedding_dims = data.feature_emb_dims
         self.feature_embeddings = nn.ModuleList()
+        # 构建一个存储特征向量的参数
         for idx in range(self.feature_num):
+            # 对每一个特征，存储其特征向量
             self.feature_embeddings.append(nn.Embedding(data.feature_alphabets[idx].size(), self.feature_embedding_dims[idx]))
         for idx in range(self.feature_num):
+            # 给每一个特征传入预训练向量
             if data.pretrain_feature_embeddings[idx] is not None:
                 self.feature_embeddings[idx].weight.data.copy_(torch.from_numpy(data.pretrain_feature_embeddings[idx]))
             else:

@@ -59,4 +59,4 @@ if __name__ == "__main__":
     debug = True
     # if g_config["PROJ_INFO"]["env"] == "local":
     #     debug = True
-    app.run(host="0.0.0.0", port=5005,debug=debug, use_reloader=False)
+    app.run(host="0.0.0.0", port=10006,debug=debug, use_reloader=False)

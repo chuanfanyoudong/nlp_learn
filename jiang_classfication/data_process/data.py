@@ -108,7 +108,9 @@ class Data:
         打印Data类的描述信息包括各参数等
         :return:
         """
-        pass
+        print("标签数量为：{}".format(self.label_alphabet_size))
+        print("token数量为：{}".format(self.word_alphabet_size))
+
 
     def build_alphabet(self, input_file):
         """

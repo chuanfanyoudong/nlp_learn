@@ -50,7 +50,6 @@ class ModelMain(object):
                 if j != i:
                     result.append(sentence[j:i])
                 j = i
-
             i += 1
         if j != i:
             result.append(sentence[j:i])
@@ -59,7 +58,7 @@ class ModelMain(object):
 
 if __name__ == '__main__':
     mm = ModelMain()
-    sentence = "来 "
+    sentence = "我来到山东省"
     mm.main(sentence)
 
 

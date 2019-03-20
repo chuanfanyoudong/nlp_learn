@@ -73,7 +73,7 @@ class WordSequence(nn.Module):
             output:
                 Variable(batch_size, sent_len, hidden_dim)
         """
-        
+        # 得到句子的表示向量，包括word级别的和特征级别的和char级别的拼接而成
         word_represent = self.wordrep(word_inputs,feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths, char_seq_recover)
         ## word_embs (batch_size, seq_len, embed_size)
         if self.word_feature_extractor == "CNN":
@@ -111,7 +111,7 @@ class WordSequence(nn.Module):
             output:
                 Variable(batch_size, sent_len, hidden_dim)
         """
-
+        # 输出维度BATCH_SIZE * MAX_LENGTH * WORD_EMB
         word_represent = self.wordrep(word_inputs, feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths, char_seq_recover)
         ## word_embs (batch_size, seq_len, embed_size)
         batch_size = word_inputs.size(0)
@@ -130,8 +130,9 @@ class WordSequence(nn.Module):
             packed_words = pack_padded_sequence(word_represent, word_seq_lengths.cpu().numpy(), True)
             hidden = None
             lstm_out, hidden = self.lstm(packed_words, hidden)
-            ## lstm_out (seq_len, seq_len, hidden_size)
-            ## feature_out (batch_size, hidden_size)
+            # transpose(1,0) 转换01两个维度
+            # contiguous() 将tensor在内存中变成整块，方便views
+            # view(batch_size,-1) 转换成batch_size * other的维度形式
             feature_out = hidden[0].transpose(1,0).contiguous().view(batch_size,-1)
             
         feature_list = [feature_out]

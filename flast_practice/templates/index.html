@@ -1,35 +1,22 @@
-<!DOCTYPE html>
-<!-- saved from url=(0029)#signin -->
-<html >
-<body class="zhi ">
-<div role="navigation" class="zu-top">
-    <img src="/home/zkjiang/flast_practice/images/index/timg.jpg" align=left />
-            <ul class="top-nav-dropdown" id="top-nav-profile-dropdown" aria-labelledby=":0">
-                <li align="center">
-                    <a href="" tabindex="-1" id=":1">
-                        <i class="zg-icon zg-icon-dd-home"></i>赏善惩恶
-                    </a>
-                </li>
-                <li align="center">
-                    <a href="/password" tabindex="-1" id=":2"  >
-                        <i class="zg-icon zg-icon-dd-pm"></i>日志管理
-                        <span id="zh-top-nav-pm-count" class="zu-top-nav-pm-count zg-noti-number" style="visibility:hidden" data-count="0">
-                    </span>
-                    </a>
-                </li>
-                <li align="center">
-                    <a href="/split/split_demo" tabindex="-1" id=":3" >
-                        <i class="zg-icon zg-icon-dd-settings"></i>分词系统
-                    </a>
-                </li>
-                <li align="center">
-                    <a href="/ner/ner_demo" tabindex="-1" id=":4">
-                        <i class="zg-icon zg-icon-dd-logout"></i>实体识别
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
+{% extends "common/base.html" %}<!--继承基础模板-->
+{% block content %}<!--自定义模板区域-->
+<div class="container">
+  <p class="pull-right visible-xs">
+    <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">Toggle nav</button>
+  </p>
+  <div class="container-fluid">
+    <div id="parent">
 </div>
-</body>
-</html>
+	<div class="row-fluid">
+		<div class="span12">
+			<div>
+				<p><font size="100">船帆有洞的个人主页</font></p>
+				<h3>
+					这是博主记录自己学习NLP的过程！任重道远！！但是冲鸭冲鸭！！！
+				</h3>
+			</div>
+		</div>
+	</div>
+</div>
+</div><!--/.col-xs-12.col-sm-9-->
+{% endblock %}

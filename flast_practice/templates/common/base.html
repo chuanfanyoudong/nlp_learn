@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+    `   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>船帆有洞的个人主页</title>
+        <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+        <meta name="description" content="藕丝空间">
+        <meta name="author" content="东方鹗">
+        <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}"><!--引入项目的图标，将需要的 ico 文件放到 static/images 文件夹下．-->
+
+        <title>{% block title %}我的第一个前端页面{% endblock %}</title>
+        <!--设置网页的标题，通过这样的设置，你可以利用 jinja2 的一些特性，将每个网页的标题进行不通的设置．-->
+
+        {% block css %}　<!--css模块区域-->
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='../../static/css/bootstrap.min.css') }}">
+        <!-- 可选的Bootstrap主题文件（一般不用引入） -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}">
+        <!-- Custom styles for this template -->
+        <link href="{{ url_for('static', filename='css/offcanvas.css') }}" rel="stylesheet">
+        {% endblock %}
+    </head>
+
+    <body  style="background: linear-gradient(90deg, rgb(88,159,175), rgb(136,228,179));">
+        <div class="container">
+            <div class="row row-offcanvas row-offcanvas-right">
+                {% block content %}<!--自定义模板区域-->
+
+                {% endblock %}
+                {% include "common/sidebar.html" %}<!--引入网页的侧边模板-->
+            </div><!--/row-->
+            <!--{% include "common/footer.html" %}&lt;!&ndash;引入网页的底部模板&ndash;&gt;-->
+        </div>
+        {% block js %}<!--js模块区域-->
+        <!-- Bootstrap core JavaScript
+        ================================================== -->
+        <!-- Placed at the end of the document so the pages load faster -->
+        <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/offcanvas.js') }}"></script>
+        {% endblock %}
+    </body>
+</html>

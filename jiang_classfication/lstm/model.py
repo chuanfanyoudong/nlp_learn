@@ -18,49 +18,161 @@ import torch.nn.functional as F
 # 1、kmax_pooling的使用，对所有RNN的输出做最大池化
 # 2、分类器选用两层全连接层+BN层，还是直接使用一层全连接层
 # 3、是否需要init_hidden
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
-def kmax_pooling(x, dim, k):
-    index = x.topk(k, dim=dim)[1].sort(dim=dim)[0]  # torch.Tensor.topk()的输出有两项，后一项为索引
-    return x.gather(dim, index)
+from jiang_classfication.model.wordrep import WordRep
 
 
-class LSTM():
-    def __init__(self, config, vectors):
+# class LSTM():
+#     def __init__(self, config):
+#         super(LSTM, self).__init__()
+#         self.config = config
+#         # self.kmax_pooling = config.kmax_pooling
+#         self.bilstm_flag = config.HP_bilstm
+#         self.droplstm = nn.Dropout(config.HP_dropout)
+#         self.lstm_layer = config.HP_lstm_layer
+#         self.embedding = nn.Embedding(config.word_alphabet.size(), config.word_emb_dim).cuda()
+#         self.input_size = config.word_emb_dim
+#         self.feature_num = config.feature_num
+#         self.word_feature_extractor = "LSTM"
+#         self.wordrep = WordRep(config)
+#         if self.bilstm_flag:
+#             lstm_hidden = config.HP_hidden_dim // 2
+#         else:
+#             lstm_hidden = config.HP_hidden_dim
+#         self.lstm = nn.LSTM(self.input_size, lstm_hidden, num_layers=self.lstm_layer, batch_first=True,
+#                                 bidirectional=self.bilstm_flag).cuda()
+#         self.hidden2tag = nn.Linear(config.HP_hidden_dim, config.label_alphabet_size).cuda()
+#
+#     def forward(self, word_inputs, feature_inputs, word_seq_lengths, char_inputs,
+#                                                         char_seq_lengths, char_seq_recover):
+#         batch_size = word_inputs.size(0)
+#         embed = self.embedding(word_inputs)
+#         word_represent = self.wordrep(word_inputs, feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths,
+#                                       char_seq_recover)
+#         packed_words = pack_padded_sequence(word_represent, word_seq_lengths.cpu().numpy(), True)
+#         hidden = None
+#         lstm_out, hidden = self.lstm(packed_words, hidden)
+#         lstm_out, _ = pad_packed_sequence(lstm_out)
+#         # feature_out = self.droplstm(lstm_out.transpose(1, 0))
+#         outputs = self.hidden2tag(lstm_out)
+#         return outputs
+#
+#     def sentence_representation(self, word_inputs, feature_inputs, word_seq_lengths, char_inputs,
+#                                                         char_seq_lengths, char_seq_recover):
+#         batch_size = word_inputs.size(0)
+#         embed = self.embedding(word_inputs)
+#         word_represent = self.wordrep(word_inputs, feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths,
+#                                       char_seq_recover)
+#         packed_words = pack_padded_sequence(word_represent, word_seq_lengths.cpu().numpy(), True)
+#         hidden = None
+#         lstm_out, hidden = self.lstm(packed_words, hidden)
+#         lstm_out, _ = pad_packed_sequence(lstm_out)
+#         # feature_out = self.droplstm(lstm_out.transpose(1, 0))
+#         outputs = self.hidden2tag(lstm_out)
+#         return outputs
+
+
+
+class LSTM(nn.Module):
+    def __init__(self, config):
         super(LSTM, self).__init__()
         self.config = config
-        self.kmax_pooling = config.kmax_pooling
+        # self.kmax_pooling = config.kmax_pooling
+        self.bilstm_flag = config.HP_bilstm
+        self.droplstm = nn.Dropout(config.HP_dropout)
+        self.lstm_layer = config.HP_lstm_layer
+        self.embedding = nn.Embedding(config.word_alphabet.size(), config.word_emb_dim).cuda()
+        self.input_size = config.word_emb_dim
+        self.feature_num = config.feature_num
+        self.word_feature_extractor = "LSTM"
+        self.wordrep = WordRep(config)
+        if self.bilstm_flag:
+            lstm_hidden = config.HP_hidden_dim // 2
+        else:
+            lstm_hidden = config.HP_hidden_dim
+        self.lstm = nn.LSTM(self.input_size, lstm_hidden, num_layers=self.lstm_layer, batch_first=True,
+                                bidirectional=self.bilstm_flag).cuda()
+        self.hidden2tag = nn.Linear(config.HP_hidden_dim, config.label_alphabet_size).cuda()
+
+    # def forward(self, word_inputs, feature_inputs, word_seq_lengths, char_inputs,
+    #                                                     char_seq_lengths, char_seq_recover):
+    #     word_represent = self.wordrep(word_inputs, feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths,
+    #                                   char_seq_recover)
+    #     packed_words = pack_padded_sequence(word_represent, word_seq_lengths.cpu().numpy(), True)
+    #     hidden = None
+    #     lstm_out, hidden = self.lstm(packed_words, hidden)
+    #     lstm_out, _ = pad_packed_sequence(lstm_out)
+    #     # feature_out = self.droplstm(lstm_out.transpose(1, 0))
+    #     outputs = self.hidden2tag(lstm_out)
+    #     return outputs
+    def sentence_representation(self, word_inputs, feature_inputs, word_seq_lengths, char_inputs,
+                                                        char_seq_lengths, char_seq_recover):
+        batch_size = word_inputs.size(0)
+        embed = self.embedding(word_inputs)
+        word_represent = self.wordrep(word_inputs, feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths,
+                                      char_seq_recover)
+        packed_words = pack_padded_sequence(word_represent, word_seq_lengths.cpu().numpy(), True)
+        hidden = None
+        lstm_out, hidden = self.lstm(packed_words, hidden)
+        lstm_out, _ = pad_packed_sequence(lstm_out)
+        feature_out = hidden[0].transpose(1, 0).contiguous().view(batch_size, -1)
+        outputs = self.hidden2tag(feature_out)
+        return outputs
 
 
-        # LSTM
-        self.embedding = nn.Embedding(config.vocab_size, config.embedding_dim)
-        self.embedding.weight.data.copy_(vectors)
-        self.bilstm = nn.LSTM(
-            input_size=config.embedding_dim,  # 300
-            hidden_size=config.hidden_dim,  # 256
-            num_layers=config.lstm_layers, # 1
-            batch_first=False,
-            dropout=config.lstm_dropout, # 0.5
-            bidirectional=True)
+class LSTM1(nn.Module):
+    def __init__(self, data):
+        super(LSTM1, self).__init__()
+        print("build word sequence feature extractor: %s..." % (data.word_feature_extractor))
+        self.gpu = data.HP_gpu
+        self.droplstm = nn.Dropout(data.HP_dropout)
+        self.bilstm_flag = data.HP_bilstm
+        self.lstm_layer = data.HP_lstm_layer
+        self.wordrep = WordRep(data)
+        self.input_size = data.word_emb_dim
+        self.feature_num = data.feature_num
+        self.word_feature_extractor = "LSTM"
+        if self.bilstm_flag:
+            lstm_hidden = data.HP_hidden_dim // 2
+        else:
+            lstm_hidden = data.HP_hidden_dim
+        self.lstm = nn.LSTM(self.input_size, lstm_hidden, num_layers=self.lstm_layer, batch_first=True,
+                                bidirectional=self.bilstm_flag)
+        # The linear layer that maps from hidden state space to tag space
+        self.hidden2tag = nn.Linear(data.HP_hidden_dim, data.label_alphabet_size)
 
-        # self.fc = nn.Linear(args.hidden_dim * 2 * 2, args.label_size)
-        # 两层全连接层，中间添加批标准化层
-        # 全连接层隐藏元个数需要再做修改
-        self.fc = nn.Sequential(
-            nn.Linear(self.kmax_pooling * (config.hidden_dim * 2), config.linear_hidden_size),
-            nn.BatchNorm1d(config.linear_hidden_size),
-            nn.ReLU(inplace=True),
-            nn.Linear(config.linear_hidden_size, config.label_size)
-        )
+        if self.gpu:
+            self.droplstm = self.droplstm.cuda()
+            self.hidden2tag = self.hidden2tag.cuda()
+            if self.word_feature_extractor == "CNN":
+                self.word2cnn = self.word2cnn.cuda()
+                for idx in range(self.cnn_layer):
+                    self.cnn_list[idx] = self.cnn_list[idx].cuda()
+                    self.cnn_drop_list[idx] = self.cnn_drop_list[idx].cuda()
+                    self.cnn_batchnorm_list[idx] = self.cnn_batchnorm_list[idx].cuda()
+            else:
+                self.lstm = self.lstm.cuda()
 
-    # 对LSTM所有隐含层的输出做kmax pooling
-    def forward(self, text):
-        embed = self.embedding(text)  # seq*batch*emb  text :2000 * 64  embed:2000 * 64 * 300
-        out = self.bilstm(embed)[0].permute(1, 2, 0) # 64 * 512 * 2000
-        hc, ht = self.bilstm(embed)[1]  # 2 * 64 * 256   2 * 64 * 256
-        pooling = kmax_pooling(out, 2, self.kmax_pooling)  # batch * hidden * kmax 64 * 512 * 2
+    def forward(self, word_inputs, feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths, char_seq_recover):
+        # 得到句子的表示向量，包括word级别的和特征级别的和char级别的拼接而成
+        word_represent = self.wordrep(word_inputs, feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths,char_seq_recover)
+        packed_words = pack_padded_sequence(word_represent, word_seq_lengths.cpu().numpy(), True)
+        hidden = None
+        lstm_out, hidden = self.lstm(packed_words, hidden)
+        lstm_out, _ = pad_packed_sequence(lstm_out)
+        # feature_out = self.droplstm(lstm_out.transpose(1, 0))
+        outputs = self.hidden2tag(lstm_out)
+        return outputs
 
-        # word+article
-        flatten = pooling.view(pooling.size(0), -1)  # 64 * 1024
-        logits = self.fc(flatten)  # 64 * 19
-
-        return logits
+    def sentence_representation(self, word_inputs, feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths,
+                                char_seq_recover):
+        word_represent = self.wordrep(word_inputs, feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths,
+                                      char_seq_recover)
+        batch_size = word_inputs.size(0)
+        packed_words = pack_padded_sequence(word_represent, word_seq_lengths.cpu().numpy(), True)
+        hidden = None
+        lstm_out, hidden = self.lstm(packed_words, hidden)
+        feature_out = hidden[0].transpose(1, 0).contiguous().view(batch_size, -1)
+        outputs = self.hidden2tag(feature_out)
+        return outputs

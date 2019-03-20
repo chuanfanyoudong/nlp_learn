@@ -20,24 +20,16 @@ def split_method():
     分词接口
     :return: 输入要分词的句子，输出分词的结果
     """
-
-    # print(username)
+    split_result = {}
     if request.method == 'POST':
         # print("POST")
         sentence = request.form.get("sentence")
         if sentence.strip() == "":
             split_result = ""
         else:
-            split_result = tg.main(sentence)
-            if request.form['submit'] == '最大频率分词':
-                split_result = " ".join(tg.main(sentence))
-            if request.form['submit'] == 'hmm分词':
-                split_result = hmm_sg.cut(sentence)
-                # print(type(split_result))
-            if request.form['submit'] == 'crf分词':
-                result = mm.main(sentence)
-                # print("crf结果", result)
-                split_result = " ".join(mm.main(sentence))
+            split_result["max_fre_result"] = " ".join(tg.main(sentence))
+            split_result["hmm_result"] = hmm_sg.cut(sentence)
+            # split_result["crf_result"] = " ".join(mm.main(sentence))
         return render_template("split_sentence.html", split_result = split_result,
                                lstm_split_result = "分词结果")
     return render_template("split_sentence.html", split_result = "分词结果",

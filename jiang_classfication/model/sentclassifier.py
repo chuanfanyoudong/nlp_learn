@@ -10,6 +10,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .wordsequence import WordSequence
+from .my_own_model import MyOwnMoedl
+from jiang_classfication.lstm.model import LSTM
+
 
 class SentClassifier(nn.Module):
     def __init__(self, data):
@@ -19,11 +22,28 @@ class SentClassifier(nn.Module):
         self.average_batch = data.average_batch_loss
         label_size = data.label_alphabet_size
         self.word_hidden = WordSequence(data)
+        self.model = MyOwnMoedl(data)
+        self.lstm = LSTM(data)
 
 
 
     def calculate_loss(self, word_inputs, feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths, char_seq_recover, batch_label, mask):
-        outs = self.word_hidden.sentence_representation(word_inputs,feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths, char_seq_recover)
+        """
+        损失计算函数
+        :param word_inputs:单词级别的输入词向量,  5 * 128  BATCH_SIZE * 最大句子长度
+        :param feature_inputs: 特征级别的输入词向量
+        :param word_seq_lengths: 句子的长度列表
+        :param char_inputs: char级别的输入词向量
+        :param char_seq_lengths: 句子的char级别的长度
+        :param char_seq_recover:
+        :param batch_label: label标签
+        :param mask: 掩盖矩阵
+        :return: 损失
+        """
+        # 核心函数，计算最终的输出，和label作比较输出维度BATCT_SIZE*
+        # outs = self.word_hidden.sentence_representation(word_inputs,feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths, char_seq_recover)
+        # outs = self.model.sentence_representation(word_inputs, feature_inputs, word_seq_lengths, char_inputs,char_seq_lengths, char_seq_recover)
+        outs = self.lstm.sentence_representation(word_inputs, feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths, char_seq_recover)
         batch_size = word_inputs.size(0)
         # loss_function = nn.CrossEntropyLoss(ignore_index=0, reduction='sum')
         outs = outs.view(batch_size, -1)
@@ -43,7 +63,10 @@ class SentClassifier(nn.Module):
 
 
     def forward(self, word_inputs, feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths, char_seq_recover, mask):
-        outs = self.word_hidden.sentence_representation(word_inputs,feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths, char_seq_recover)
+        # 评估函数会用到的前向传播
+        # outs = self.word_hidden.sentence_representation(word_inputs,feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths, char_seq_recover)
+        # outs = self.model.sentence_representation(word_inputs, feature_inputs, word_seq_lengths, char_inputs,char_seq_lengths, char_seq_recover)
+        outs = self.lstm.sentence_representation(word_inputs, feature_inputs, word_seq_lengths, char_inputs,char_seq_lengths, char_seq_recover)
         batch_size = word_inputs.size(0)
         outs = outs.view(batch_size, -1)
         _, tag_seq  = torch.max(outs, 1)

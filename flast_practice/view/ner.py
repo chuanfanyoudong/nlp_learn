@@ -1,4 +1,6 @@
 import logging
+import time
+
 from flask import Blueprint, request, render_template
 from jiang_ner.crf_ner.api import recognize
 
@@ -12,21 +14,21 @@ def ner_method():
     """
 
     # print(username)
+    split_result = {}
     if request.method == 'POST':
         # print("POST")
-        ner_sentence = request.form.get("ner_sentence")
+        ner_sentence = request.form.get("sentence")
         # print(ner_sentence)
         if ner_sentence.strip() == "":
             split_result = ""
         else:
-            if request.form['submit'] == 'CRF':
-                split_result = recognize(ner_sentence)
-            # if request.form['submit'] == 'hmm分词':
-            #     split_result = hmm_sg.cut(sentence)
-            #     # print(type(split_result))
-            # if request.form['submit'] == 'crf分词':
-            #     split_result = " ".join(mm.main(sentence))
-        return render_template("ner.html", split_result = split_result[0],
+            crf_start = time.time()
+            crf_result = recognize(ner_sentence)
+            crf_end = time.time()
+            split_result["crf_result"] = " ".join(crf_result[0])
+            split_result["crf_cost"] = str(crf_end - crf_start)[:5] + "s"
+            print(recognize(ner_sentence))
+        return render_template("ner.html", split_result = split_result,
                                lstm_split_result = "NER结果")
         # print(entity_info)
     # result = test_qm.qa(qs)

@@ -9,6 +9,7 @@
 @time: 2019/3/8 10:09
 """
 import gc
+import os
 
 import numpy as np
 import random
@@ -17,13 +18,16 @@ import time
 
 import torch
 from torch import optim
-
+cur_dir_path = os.path.dirname(os.path.abspath(__file__))
+ROOT = cur_dir_path + "/../"
+sys.path.append(ROOT)
 from conf.config import get_config
-from jiang_classfication.data_process.metric import get_ner_fmeasure
 from jiang_classfication.model.sentclassifier import SentClassifier
+from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
 
 __config = get_config()
 DATA_PATH = __config["classfication"]["data_path"]
+DATA_PATH = __config["deep_classfication"]["concept_data"]
 ROOT = __config["path"]["root"]
 sys.path.append(ROOT)
 DATA_PATH = ROOT + DATA_PATH
@@ -178,9 +182,12 @@ def evaluate(data, model, name, nbest=None):
         gold_results += gold_label
     decode_time = time.time() - start_time
     speed = len(instances)/decode_time
-    acc, p, r, f = get_ner_fmeasure(gold_results, pred_results, data.tagScheme)
-    if nbest and not data.sentence_classification:
-        return speed, acc, p, r, f, nbest_pred_results, pred_scores
+    # print(gold_results[:100])
+    # print(pred_results[:100])
+    f = f1_score(gold_results, pred_results, average='macro')
+    p = precision_score(gold_results, pred_results, average='macro')
+    r = recall_score(gold_results, pred_results, average='macro')
+    acc = accuracy_score(gold_results, pred_results)
     return speed, acc, p, r, f, pred_results, pred_scores
 
 
@@ -470,6 +477,7 @@ def train(data):
         # 记录
         dev_cost = dev_finish - epoch_finish
         # 判断输出的是准确率还是F1
+        print("姜振康"*10)
         if data.seg:
             current_score = f
             print("Dev: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(dev_cost, speed, acc, p, r, f))
@@ -482,18 +490,18 @@ def train(data):
                 print("Exceed previous best f score:", best_dev)
             else:
                 print("Exceed previous best acc score:", best_dev)
-            model_name = data.model_dir +'.'+ str(idx) + str(best_dev)[:5] + ".model"
+            model_name = data.model_dir +'.'+ str(idx) + "_" + str(current_score)[:5] + ".model"
             print("Save current best model in file:", model_name)
             torch.save(model.state_dict(), model_name)
             best_dev = current_score
         # 记录测试集的效果
-        speed, acc, p, r, f, _,_ = evaluate(data, model, "test")
-        test_finish = time.time()
-        test_cost = test_finish - dev_finish
-        if data.seg:
-            print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(test_cost, speed, acc, p, r, f))
-        else:
-            print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f"%(test_cost, speed, acc))
+        # speed, acc, p, r, f, _,_ = evaluate(data, model, "test")
+        # test_finish = time.time()
+        # test_cost = test_finish - dev_finish
+        # if data.seg:
+        #     print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(test_cost, speed, acc, p, r, f))
+        # else:
+        #     print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f"%(test_cost, speed, acc))
         gc.collect()
 
 
@@ -530,8 +538,10 @@ if __name__ == '__main__':
     data.build_alphabet(data.train_dir)
     data.build_alphabet(data.val_dir)
     data.build_alphabet(data.test_dir)
+
     data.generate_instance('train')
     data.generate_instance('val')
     data.generate_instance('test')
     data.build_pretrained_emb()
+    data.show_data_summary()
     train(data)
