@@ -31,16 +31,21 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 from sklearn import svm
 from sklearn import preprocessing
-
-
+cur_dir_path = os.path.dirname(os.path.abspath(__file__))
+ROOT = cur_dir_path + "/../"
+sys.path.append(ROOT)
 from conf.config import get_config
 __config = get_config()
-
 DATA_PATH = __config["classfication"]["data_path"]
 ROOT = __config["path"]["root"]
+MODEL_PATH = ROOT + __config["traditional_ml"]["model_path"]
 sys.path.append(ROOT)
 from jiang_classfication.tfidf.TFIDF import TFIDF
-
+vectorizer = None
+encoder = None
+knn_model = None
+rf_model = None
+logistic_model = None
 ## 数据文件夹路路径，不是文件路径
 DATA_PATH = ROOT + DATA_PATH
 
@@ -129,9 +134,9 @@ def train(model_name = "logistic"):
     end = time.time()
     print("训练{}模型需要的时间是{}".format(model_name, end - start))
     ## 保存模型
-    # joblib.dump(model, "model.model")
-    # joblib.dump(vectorizer, "vectorizer.pkl")
-    # joblib.dump(encoder, "encode.pkl")
+    joblib.dump(model, MODEL_PATH + model_name + "_model.model")
+    # joblib.dump(vectorizer, MODEL_PATH + "vectorizer.pkl")
+    # joblib.dump(encoder, MODEL_PATH + "encode.pkl")
     ## 在验证集上的效果测试
     print("val mean accuracy: {0}".format(model.score(val_set, val_label)))
     val_pred = model.predict(val_set)
@@ -142,26 +147,60 @@ def train(model_name = "logistic"):
     print(classification_report(test_label, test_pred))
     return tfidf, label
 
-def predict(sentence):
+def predict(sentence, model_name):
     """
     预测文本的类型
     :param sentence:要预测的句子
     :return:
     """
     ##加载模型
-    model = joblib.load("model.model")
+    if model_name == "logistic":
+        global logistic_model
+        if not logistic_model:
+            print("加载{}模型".format(model_name))
+            logistic_model = joblib.load(MODEL_PATH + model_name + "_model.model")
+        model = logistic_model
+    if model_name == "knn":
+        global knn_model
+        if not knn_model:
+            print("加载{}模型".format(model_name))
+            knn_model = joblib.load(MODEL_PATH + model_name + "_model.model")
+        model = knn_model
+    if model_name == "rf":
+        global rf_model
+        if not rf_model:
+            print("加载{}模型".format(model_name))
+            rf_model = joblib.load(MODEL_PATH + model_name + "_model.model")
+        model = rf_model
+    if model_name == "svm":
+        global svm_model
+        if not svm_model:
+            print("加载{}模型".format(model_name))
+            svm_model = joblib.load(MODEL_PATH + model_name + "_model.model")
+        model = svm_model
     ## 将句子转化成特征向量
-    vectorizer = joblib.load("vectorizer.pkl")
+    global vectorizer
+    if not vectorizer:
+        print("加载词向量表")
+        vectorizer = joblib.load(MODEL_PATH + "vectorizer.pkl")
     ## 加载label的标签dict
-    encoder = joblib.load("encode.pkl")
+    global encoder
+    if encoder == None:
+        print("加载tag词典")
+        encoder = joblib.load(MODEL_PATH + "encode.pkl")
     corpus = vectorizer.transform([" ".join(jieba.lcut(sentence))])
+    start_time = time.time()
     result = model.predict(corpus)
-    print([{idx: label} for idx, label in enumerate(list(encoder.classes_[0:10]))])
-    print(result)
+    end_time = time.time()
+    return result[0], end_time - start_time
+    # print([{idx: label} for idx, label in enumerate(list(encoder.classes_[0:10]))])
+    # print(result)
 
 if __name__ == '__main__':
 
     # data_dict = get_data("cnews.test.txt", data_dict)
-    train(model_name = "rf")
-    # sentence = "中国娱乐新闻真的很好看"
-    # predict(sentence)
+    train(model_name = "svm")
+    sentence = "中国娱乐新闻真的很好看"
+    print(predict(sentence, "svm"))
+
+

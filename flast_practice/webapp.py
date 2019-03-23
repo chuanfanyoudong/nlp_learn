@@ -9,6 +9,7 @@ from flast_practice.config import get_config
 __conf = get_config()
 from flast_practice.view.split_sentence import split
 from flast_practice.view.ner import ner
+from flast_practice.view.sentence_classfication import sentence_classfication
 g_proj_path = os.path.dirname(os.path.abspath(__file__))+"/../"
 sys.path.append(g_proj_path)
 sys.path.append(g_proj_path+"modules/")
@@ -21,6 +22,7 @@ gi = GetInfo()
 app = Flask(__name__)
 app.register_blueprint(split, url_prefix='/split')
 app.register_blueprint(ner, url_prefix='/ner')
+app.register_blueprint(sentence_classfication, url_prefix='/sentence_classfication')
 
 
 # 返回主页面的文件

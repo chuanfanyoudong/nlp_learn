@@ -496,7 +496,6 @@ def main():
         os.makedirs(args.output_dir)
 
     task_name = args.task_name.lower()
-
     if task_name not in processors:
         raise ValueError("Task not found: %s" % (task_name))
 
