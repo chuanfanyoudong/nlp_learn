@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 # coding: utf-8
 # File: siamese_train.py
@@ -17,13 +18,14 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 class SiameseNetwork:
     def __init__(self):
         cur = '/'.join(os.path.abspath(__file__).split('/')[:-1])
-        self.train_path = os.path.join(cur, 'data/train.txt')
+        # self.train_path = os.path.join(cur, 'data/train.txt')
+        self.train_path = os.path.join(cur, 'data/ant_all.text')
         self.vocab_path = os.path.join(cur, 'model/vocab.txt')
         self.embedding_file = os.path.join(cur, 'model/token_vec_300.bin')
         self.model_path = os.path.join(cur, 'model/tokenvec_bilstm2_siamese_model.h5')
         self.datas, self.word_dict = self.build_data()
         self.EMBEDDING_DIM = 300
-        self.EPOCHS = 20
+        self.EPOCHS = 1
         self.BATCH_SIZE = 512
         self.NUM_CLASSES = 2
         self.VOCAB_SIZE = len(self.word_dict)
@@ -40,7 +42,7 @@ class SiameseNetwork:
             line = line.strip().split('	')
             if not line:
                 continue
-            sent = line[0]
+            sent = line[1]
             sent_len = len(sent)
             len_list.append(sent_len)
         all_sent = len(len_list)
@@ -70,9 +72,9 @@ class SiameseNetwork:
             line = line.rstrip().split('\t')
             if not line:
                 continue
-            sent_left = line[0]
-            sent_right = line[1]
-            label = line[2]
+            sent_left = line[1]
+            sent_right = line[2]
+            label = line[3]
             sample_x_left.append([char for char in sent_left if char])
             sample_x_right.append([char for char in sent_right if char])
             sample_y.append(label)
@@ -130,7 +132,8 @@ class SiameseNetwork:
         return embedding_matrix
 
     '''基于曼哈顿空间距离计算两个字符串语义空间表示相似度计算'''
-    def exponent_neg_manhattan_distance(self, sent_left, sent_right):
+    def exponent_neg_manhattan_distance(self, inputX):
+        (sent_left, sent_right) = inputX
         return K.exp(-K.sum(K.abs(sent_left - sent_right), axis=1, keepdims=True))
 
     '''基于欧式距离的字符串相似度计算'''
@@ -167,8 +170,9 @@ class SiameseNetwork:
         left_output = shared_lstm(encoded_left)
         right_output = shared_lstm(encoded_right)
 
-        distance = Lambda(lambda x: self.exponent_neg_manhattan_distance(x[0], x[1]),
-                          output_shape=lambda x: (x[0][0], 1))([left_output, right_output])
+        # distance = Lambda(lambda x: self.exponent_neg_manhattan_distance(x[0], x[1]),
+        #                   output_shape=lambda x: (x[0][0], 1))([left_output, right_output])
+        distance = Lambda(self.exponent_neg_manhattan_distance, name = "xiaosa")([left_output, right_output])
 
         model = Model([left_input, right_input], distance)
         model.compile(loss='binary_crossentropy',
@@ -191,9 +195,19 @@ class SiameseNetwork:
                               batch_size=self.BATCH_SIZE,
                               epochs=self.EPOCHS,
                             )
+        # result = model.predict([left_x_train, right_x_train])
+        # print(result)
         self.draw_train(history)
         model.save(self.model_path)
         return model
+
+    def predict(self):
+        left_x_train, right_x_train, y_train = self.modify_data()
+        left_x_train, right_x_train = left_x_train[:100], right_x_train[:100]
+        model = self.bilstm_siamese_model()
+        model.load_weights(self.model_path)
+        result = model.predict([left_x_train, right_x_train])
+        print(result)
 
     '''绘制训练曲线'''
     def draw_train(self, history):
@@ -239,5 +253,6 @@ class SiameseNetwork:
         '''
 
 handler = SiameseNetwork()
-handler.train_model()
+# handler.train_model()
+handler.predict()
 

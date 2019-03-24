@@ -7,3 +7,8 @@
     - 命名实体识别部分jiang_ner
     - 简单的前端展示flask_practice
     
+## 启动
+
+cd nlp_learn
+cd cd flast_practice/
+PYTHONIOENCODING=utf-8 nohup python webapp.py > webapp.log 2>&1 &

@@ -8,3 +8,4 @@ jieba_git/*
 *.dat
 *.data
 *.pyc
+*.text
